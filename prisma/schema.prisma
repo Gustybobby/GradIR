@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Program {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  university  String
+
+  professors Professor[]
+}
+
+model Professor {
+  id   String @id @default(uuid())
+  name String
+
+  program   Program @relation(fields: [programId], references: [id])
+  programId String
+
+  papers Paper[]
+}
+
+model Paper {
+  id String @id
+
+  professors Professor[]
+}
