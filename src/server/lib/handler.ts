@@ -1,3 +1,4 @@
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
@@ -8,6 +9,18 @@ export async function handle<T>(
     console.error(error);
     if (error instanceof ZodError) {
       return NextResponse.json(error.issues, { status: 400 });
+    }
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return NextResponse.json("unique constraint violation", {
+          status: 409,
+        });
+      }
+      if (error.code === "P2003") {
+        return NextResponse.json("foreign key constraint violation", {
+          status: 409,
+        });
+      }
     }
     if (error instanceof Error) {
       if (error.message === "unauthenticated") {
