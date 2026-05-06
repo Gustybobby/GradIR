@@ -25,7 +25,7 @@ export type PaperDB = z.infer<typeof PaperDB>;
 export const PaperIndex = z
   .object({
     title: z.string(),
-    published_at: z.date(),
+    published_at: z.coerce.date(),
     citations: z.number().int(),
   })
   .extend({
