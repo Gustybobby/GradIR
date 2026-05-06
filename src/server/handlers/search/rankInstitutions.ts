@@ -63,6 +63,9 @@ export const getRankedInstitutions = async (
 };
 
 const getInstitutionsByIds = async (ids: string[]): Promise<Institution[]> => {
+  if (!ids.length) {
+    return [];
+  }
   const [institutionMetas, institutionDocs] = await Promise.all([
     prisma.institution.findMany({ where: { id: { in: ids } } }),
     elastic.mget<InstitutionIndex>({ index: INSTITUTION_INDEX_NAME, ids }),

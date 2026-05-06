@@ -65,6 +65,9 @@ const getAuthorsByIds = async (
   authorIds: string[],
   paperIds: string[],
 ): Promise<With<{ papers: Pick<Paper, "id">[] }, Author>[]> => {
+  if (!authorIds.length && !paperIds.length) {
+    return [];
+  }
   const authorMetas = await prisma.author.findMany({
     where: {
       OR: [
