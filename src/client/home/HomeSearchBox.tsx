@@ -2,9 +2,11 @@
 
 import { SearchInput } from "@/client/ui/SearchInput";
 import { useRouter } from "next/navigation";
+import React from "react";
 
 export function HomeSearchBox() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   return (
     <form
@@ -16,10 +18,15 @@ export function HomeSearchBox() {
         if (!query) {
           return;
         }
+        setIsLoading(true);
         router.push(`/search?query=${encodeURIComponent(query.toString())}`);
       }}
     >
-      <SearchInput id="search-query" name="search-query" />
+      <SearchInput
+        id="search-query"
+        name="search-query"
+        isLoading={isLoading}
+      />
     </form>
   );
 }

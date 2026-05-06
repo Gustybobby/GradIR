@@ -44,6 +44,7 @@ export function Search() {
             onValueChange={(value) => {
               setQuery(value);
             }}
+            isLoading={isFetching}
           />
         </form>
       </header>
