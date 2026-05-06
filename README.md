@@ -1,3 +1,50 @@
+# GradIR — Research-based Institution Search
+
+**GradIR** is a vertical academic search system that retrieves institutions by matching user research interests to research profiles and publications, then ranks institutions based on research alignment.
+
+## Installation
+
+This project requires **PostgreSQL** and **Elastic Cloud**.
+
+> ⚠️ If you plan to self-host Elasticsearch instead of using Elastic Cloud, you will need to manually modify the Elasticsearch client initialization in the codebase.
+
+### Steps
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/Gustybobby/GradIR.git
+   ```
+
+2. **Set environment variables**
+
+   Create a `.env` file in the root directory and configure the following:
+
+   ```env
+   ELASTIC_NODE=<your-elastic-endpoint>
+   ELASTIC_API_KEY=<your-elastic-api-key>
+   DATABASE_URL=<your-postgres-connection-string>
+   API_KEY=<your-internal-api-key>
+   ```
+
+   - `ELASTIC_NODE`: Your Elastic Cloud endpoint
+   - `ELASTIC_API_KEY`: API key for Elasticsearch access
+   - `DATABASE_URL`: PostgreSQL connection string
+   - `API_KEY`: Used for securing data management APIs
+
+3. **Start the project in development mode**
+
+   ```bash
+   npm run dev
+   ```
+
+4. **Build and run in production**
+
+   ```bash
+   npm run build
+   npm run start
+   ```
+
 # API Documentation
 
 ## Overview
