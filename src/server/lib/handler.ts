@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 export async function handle<T>(
-  callback: () => Promise<NextResponse<T>>,
-): Promise<NextResponse> {
+  callback: () => Promise<NextResponse<T> | Response>,
+): Promise<NextResponse | Response> {
   return callback().catch((error) => {
     console.error(error);
     if (error instanceof Error) {

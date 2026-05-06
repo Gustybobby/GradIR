@@ -44,6 +44,10 @@ Create or update an institution.
 - **website**: Official website URL
 - **type**: Institution type (e.g., university, research institute)
 
+## `/api/institutions/[institution_id]` — DELETE
+
+Delete institution
+
 ---
 
 ## `/api/authors` — PUT
@@ -75,6 +79,10 @@ Create or update an author.
 - **h_index**: Research impact metric
 - **orcid**: ORCID identifier URL
 - **summary**: Research interests summary
+
+## `/api/authors/[author_id]` — DELETE
+
+Delete author
 
 ---
 
@@ -109,6 +117,10 @@ Create or update a paper.
 - **abstract**: Paper abstract
 - **author_ids**: List of associated author IDs
 - **institution_ids**: List of associated institution IDs
+
+## `/api/papers/[paper_id]` — DELETE
+
+Delete paper
 
 ---
 
