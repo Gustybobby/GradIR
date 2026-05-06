@@ -3,24 +3,27 @@ import {
   SearchResultSkeleton,
 } from "@/client/search/SearchResult";
 import { Separator } from "@/client/ui/Separator";
-import { InstitutionRankedSearchResult } from "@/server/schema/institution";
+import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
 import React from "react";
 
 interface Props {
-  results: InstitutionRankedSearchResult[] | undefined;
+  result: CompressedInstitutionRankedSearchResult | undefined;
 }
 
-function SearchResultListComponent({ results }: Props) {
+function SearchResultListComponent({ result }: Props) {
   return (
     <div className="grid grid-cols-7">
       <main className="col-span-full md:col-start-2 md:col-span-5">
         <div className="grid gap-6 px-4">
-          {results ? (
+          {result ? (
             <>
-              {results.length ? (
-                results.map((result) => (
-                  <React.Fragment key={result.id}>
-                    <SearchResult institution={result} />
+              {result.institutions.length ? (
+                result.institutions.map((institution) => (
+                  <React.Fragment key={institution.id}>
+                    <SearchResult
+                      institution={institution}
+                      papers={result.papers}
+                    />
                     <Separator />
                   </React.Fragment>
                 ))

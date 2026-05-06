@@ -1,4 +1,5 @@
 import { AuthorRankedSearchResult } from "@/server/schema/author";
+import { PaperWithScore } from "@/server/schema/paper";
 import { Score, With } from "@/server/types/util";
 import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
@@ -50,3 +51,16 @@ export type InstitutionRankedSearchResult = With<
   { authors: AuthorRankedSearchResult[] },
   InstitutionWithScore
 >;
+
+export type CompressedInstitutionRankedSearchResult = {
+  institutions: With<
+    {
+      authors: With<
+        { paper_ids: PaperWithScore["id"][] },
+        Omit<AuthorRankedSearchResult, "papers">
+      >[];
+    },
+    InstitutionWithScore
+  >[];
+  papers: PaperWithScore[];
+};

@@ -11,7 +11,7 @@ export function Search() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { results, isFetching, paramsQuery, search } = useSearch();
+  const { result, isFetching, paramsQuery, search } = useSearch();
 
   const [query, setQuery] = React.useState<string>(paramsQuery);
 
@@ -47,7 +47,7 @@ export function Search() {
           />
         </form>
       </header>
-      <SearchResultList results={isFetching ? undefined : results} />
+      <SearchResultList result={isFetching ? undefined : result} />
     </div>
   );
 }

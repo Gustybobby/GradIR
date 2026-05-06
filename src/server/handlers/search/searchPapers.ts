@@ -43,7 +43,7 @@ export const searchPapers = async (
                         gauss: {
                           published_at: {
                             origin: "now",
-                            scale: "1400d",
+                            scale: "7000d",
                             offset: "700d",
                           },
                         },

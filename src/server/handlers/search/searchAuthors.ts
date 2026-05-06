@@ -27,10 +27,10 @@ export const searchAuthors = async (
                     multi_match: {
                       query: options.query,
                       fields: [
-                        "full_name^2",
+                        "full_name",
                         "display_name",
                         "orcid",
-                        "summary",
+                        "summary^2",
                       ],
                     },
                   },

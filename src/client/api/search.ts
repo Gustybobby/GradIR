@@ -1,9 +1,9 @@
-import { InstitutionRankedSearchResult } from "@/server/schema/institution";
+import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
 import { SearchOptions } from "@/server/schema/search";
 
 export const search = async (
   options: SearchOptions,
-): Promise<InstitutionRankedSearchResult[]> => {
+): Promise<CompressedInstitutionRankedSearchResult> => {
   const response = await fetch("/api/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -6,14 +6,23 @@ import {
   SecondaryHeading,
   TertiaryHeading,
 } from "@/client/ui/Typography";
-import { InstitutionRankedSearchResult } from "@/server/schema/institution";
+import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
 import Link from "next/link";
+import React from "react";
 
 interface Props {
-  institution: InstitutionRankedSearchResult;
+  institution: CompressedInstitutionRankedSearchResult["institutions"][number];
+  papers: CompressedInstitutionRankedSearchResult["papers"];
 }
 
-export function SearchResult({ institution }: Props) {
+export function SearchResult({ institution, papers }: Props) {
+  const institutionPapers = React.useMemo(() => {
+    const paperIdSet = new Set(
+      institution.authors.flatMap((author) => author.paper_ids),
+    );
+    return papers.filter((paper) => paperIdSet.has(paper.id));
+  }, [institution, papers]);
+
   return (
     <article className="grid gap-2">
       <div className="grid gap-1">
@@ -29,7 +38,7 @@ export function SearchResult({ institution }: Props) {
       </div>
       <div className="grid gap-1">
         <TertiaryHeading>Matched Researchers</TertiaryHeading>
-        <ol className="list-decimal list-inside">
+        <ol className="list-decimal list-inside space-y-1">
           {institution.authors.map((author) => (
             <li key={author.id}>
               <Link
@@ -39,27 +48,40 @@ export function SearchResult({ institution }: Props) {
               >
                 {author.display_name}
               </Link>
-              <Paragraph className="line-clamp-2">{author.summary}</Paragraph>
-              <ol className="mt-1 ml-4 list-disc list-inside space-y-2">
-                {author.papers.slice(0, 2).map((paper) => (
-                  <li key={paper.id} className="tracking-tight">
-                    <Link
-                      href={paper.doi}
-                      target="_blank"
-                      className="hover:underline"
-                    >
-                      {paper.title}
-                    </Link>
-                    <ParagraphCaption className="mt-1 text-ellipsis line-clamp-2 italic tracking-normal">
-                      {paper.abstract}
-                    </ParagraphCaption>
-                  </li>
-                ))}
-              </ol>
+              {author.summary ? (
+                <ParagraphCaption className="mt-1 line-clamp-2 italic">
+                  {author.summary}
+                </ParagraphCaption>
+              ) : null}
             </li>
           ))}
         </ol>
       </div>
+      {institutionPapers.length ? (
+        <div className="grid gap-1">
+          <TertiaryHeading>Matched Publications</TertiaryHeading>
+          <ol className="list-decimal list-inside space-y-1">
+            {institutionPapers.map((paper) => (
+              <li key={paper.id}>
+                <Link
+                  href={paper.doi}
+                  target="_blank"
+                  className="hover:underline"
+                >
+                  {paper.title}
+                </Link>
+                <Paragraph>
+                  published {new Date(paper.published_at).toLocaleDateString()},{" "}
+                  {paper.citations} citations
+                </Paragraph>
+                <ParagraphCaption className="mt-1 line-clamp-2 italic">
+                  {paper.abstract}
+                </ParagraphCaption>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
     </article>
   );
 }
