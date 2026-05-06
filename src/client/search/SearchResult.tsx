@@ -32,7 +32,7 @@ export function SearchResult({ institution }: Props) {
         <ol className="list-decimal list-inside">
           {institution.authors.map((author) => (
             <li key={author.id}>
-              {`${author.full_name}`}
+              {author.display_name}
               <Paragraph className="line-clamp-2">{author.summary}</Paragraph>
               <ol className="mt-1 ml-4 list-disc list-inside space-y-2">
                 {author.papers.slice(0, 2).map((paper) => (
