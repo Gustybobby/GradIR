@@ -7,27 +7,54 @@ datasource db {
   provider = "postgresql"
 }
 
-model Program {
-  id          String @id @default(uuid())
-  name        String
-  description String
-  university  String
+model Institution {
+  id          String   @id @default(uuid())
+  // title       String
+  // location    String
+  // country     String
+  address     String
+  lat         Float
+  long        Float
+  // website     String
+  openalex_id String   @unique
+  // type        String
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
 
-  professors Professor[]
+  authors Author[]
+  papers  Paper[]
 }
 
-model Professor {
-  id   String @id @default(uuid())
-  name String
+model Author {
+  id          String   @id @default(uuid())
+  // full_name    String
+  // display_name String
+  openalex_id String   @unique
+  // orcid        String
+  // h_index      Int
+  // summary      String
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
 
-  program   Program @relation(fields: [programId], references: [id])
-  programId String
+  institution    Institution @relation(fields: [institution_id], references: [id])
+  institution_id String
 
   papers Paper[]
+
+  @@index([institution_id])
 }
 
 model Paper {
-  id String @id
+  id          String   @id @default(uuid())
+  doi         String   @unique
+  // title       String
+  // abstract     String
+  openalex_id String   @unique
+  // published_at DateTime
+  // citations    Int
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
 
-  professors Professor[]
+  authors      Author[]
+  institutions Institution[]
 }

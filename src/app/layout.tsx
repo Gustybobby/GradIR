@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Graduate Program Search",
   description:
-    "Graduate program search by research interests for Web Information Retrieval 2026 course, THU",
+    "Institution search by research interests for Web Information Retrieval 2026 course, THU",
 };
 
 export default function RootLayout({
