@@ -18,12 +18,11 @@ Create or update an institution.
 
 ```json
 {
-  "id": "string (optional)",
+  "id": "string",
   "address": "string",
   "location": "string",
   "lat": "number",
   "long": "number",
-  "openalex_id": "string",
   "title": "string",
   "country": "string",
   "website": "string",
@@ -33,16 +32,23 @@ Create or update an institution.
 
 ### Field Descriptions
 
-- **id** _(optional)_: Internal database ID (used for updates)
+- **id**: OpenAlex institution ID
 - **address**: Full street address
 - **location**: City and country
 - **lat**: Latitude coordinate
 - **long**: Longitude coordinate
-- **openalex_id**: OpenAlex institution ID
 - **title**: Institution name
 - **country**: Country name
 - **website**: Official website URL
 - **type**: Institution type (e.g., university, research institute)
+
+## `/api/institutions` — POST
+
+Bulk create institutions
+
+### Request Body
+
+Refer to `PUT` request body as array. Max 100 records.
 
 ## `/api/institutions/[institution_id]` — DELETE
 
@@ -58,8 +64,7 @@ Create or update an author.
 
 ```json
 {
-  "id": "string (optional)",
-  "openalex_id": "string",
+  "id": "string",
   "institution_id": "string",
   "full_name": "string",
   "display_name": "string",
@@ -71,14 +76,21 @@ Create or update an author.
 
 ### Field Descriptions
 
-- **id** _(optional)_: Internal database ID (used for updates)
-- **openalex_id**: Unique identifier from OpenAlex
+- **id**: OpenAlex author ID
 - **institution_id**: Reference to associated institution
 - **full_name**: Author’s full legal name
 - **display_name**: Preferred/public display name
 - **h_index**: Research impact metric
 - **orcid**: ORCID identifier URL
 - **summary**: Research interests summary
+
+## `/api/authors` — POST
+
+Bulk create authors
+
+### Request Body
+
+Refer to `PUT` request body as array. Max 100 records.
 
 ## `/api/authors/[author_id]` — DELETE
 
@@ -94,8 +106,7 @@ Create or update a paper.
 
 ```json
 {
-  "id": "string (optional)",
-  "openalex_id": "string",
+  "id": "string",
   "title": "string",
   "doi": "string",
   "published_at": "Date",
@@ -108,8 +119,7 @@ Create or update a paper.
 
 ### Field Descriptions
 
-- **id** _(optional)_: Internal database ID (used for updates)
-- **openalex_id**: OpenAlex paper ID
+- **id**: OpenAlex paper ID
 - **title**: Paper title
 - **doi**: Digital Object Identifier
 - **published_at**: Publication date (ISO format)
@@ -117,6 +127,14 @@ Create or update a paper.
 - **abstract**: Paper abstract
 - **author_ids**: List of associated author IDs
 - **institution_ids**: List of associated institution IDs
+
+## `/api/papers` — POST
+
+Bulk create papers
+
+### Request Body
+
+Refer to `PUT` request body as array. Max 100 records.
 
 ## `/api/papers/[paper_id]` — DELETE
 
@@ -127,8 +145,6 @@ Delete paper
 ## Notes
 
 - `PUT` is used for both **create** and **update** operations.
-- If `id` is provided, the system will update the existing record.
-- If `id` is omitted, a new record will be created.
 - Ensure referential integrity of `author_id` and `institution_id`.
 
 ---
