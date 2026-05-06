@@ -32,12 +32,24 @@ export function SearchResult({ institution }: Props) {
         <ol className="list-decimal list-inside">
           {institution.authors.map((author) => (
             <li key={author.id}>
-              {author.display_name}
+              <Link
+                href={author.orcid}
+                target="_blank"
+                className="hover:underline"
+              >
+                {author.display_name}
+              </Link>
               <Paragraph className="line-clamp-2">{author.summary}</Paragraph>
               <ol className="mt-1 ml-4 list-disc list-inside space-y-2">
                 {author.papers.slice(0, 2).map((paper) => (
                   <li key={paper.id} className="tracking-tight">
-                    {paper.title}
+                    <Link
+                      href={paper.doi}
+                      target="_blank"
+                      className="hover:underline"
+                    >
+                      {paper.title}
+                    </Link>
                     <ParagraphCaption className="mt-1 text-ellipsis line-clamp-2 italic tracking-normal">
                       {paper.abstract}
                     </ParagraphCaption>

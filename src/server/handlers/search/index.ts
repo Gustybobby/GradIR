@@ -16,12 +16,13 @@ export const searchRankedInstitutions = async (
   ]);
   const rankedAuthors = await getRankedAuthors(papers, authors, {
     raw: 0.5,
-    papers: 0.5,
+    papers_recall: 0.1,
+    papers_quality: 0.4,
   });
   const rankedInstitutions = await getRankedInstitutions(
     rankedAuthors,
     institutions,
-    { raw: 0.3, authors: 0.7 },
+    { raw: 0.3, authors_recall: 0.2, authors_quality: 0.5 },
   );
   return rankedInstitutions;
 };

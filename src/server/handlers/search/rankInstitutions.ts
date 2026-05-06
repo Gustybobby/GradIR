@@ -1,7 +1,8 @@
 import {
+  averageScore,
   getScoreSorted,
+  maxScore,
   sumScore,
-  sumScore1p,
 } from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
@@ -16,13 +17,15 @@ import {
 
 /**
  * #### Rank institutions
- * - Rank institutions by linear combination of normalized institution profile and authors score.
- * - `inst_score` = Norm(`inst_raw_score`) + Norm(sum(`inst_aut_score` over `inst_auts`))
+ * - Rank institutions by linear combination of normalized institution profile and researchers (authors) score.
+ * - `inst_score` = Norm(`inst_raw_score`) + Norm(sum(`inst_aut_score`)) + Norm(avg(`inst_aut_score`))
+ * - 2nd term is institution's researchers score-weighted recall.
+ * - 3rd term is institution's researchers quality.
  */
 export const getRankedInstitutions = async (
   authors: AuthorRankedSearchResult[],
   institutions: InstitutionWithScore[],
-  weights: { raw: number; authors: number },
+  weights: { raw: number; authors_recall: number; authors_quality: number },
 ): Promise<InstitutionRankedSearchResult[]> => {
   const institutionIds = [
     ...institutions.map((institution) => institution.id),
@@ -34,8 +37,9 @@ export const getRankedInstitutions = async (
     institutions.map((institution) => [institution.id, institution]),
   );
 
-  const institutionScoreSum = sumScore1p(institutions);
-  const authorScoreSum = sumScore1p(authors);
+  const authorScoreSum = sumScore(authors) + 1;
+  const authorMaxScore = maxScore(authors) + 1;
+  const institutionScoreSum = sumScore(institutions) + 1;
 
   return getScoreSorted(
     unionInstitutions.map((unionInstitution) => {
@@ -47,15 +51,19 @@ export const getRankedInstitutions = async (
       const rankedAuthors = getScoreSorted(
         authors.filter((author) => author.institution_id === institution.id),
       );
-      const normInstitutionRawScore =
+      const normRawScore =
         (weights.raw * institution.score) / institutionScoreSum;
-      const normInstitutionAuthorScore =
-        (weights.authors * sumScore(rankedAuthors)) / authorScoreSum;
-      const finalScore = normInstitutionRawScore + normInstitutionAuthorScore;
+      const normAuthorsRecallScore =
+        (weights.authors_recall * sumScore(rankedAuthors)) / authorScoreSum;
+      const normAuthorsQualityScore =
+        (weights.authors_quality * averageScore(rankedAuthors)) /
+        authorMaxScore;
+      const finalScore =
+        normRawScore + normAuthorsRecallScore + normAuthorsQualityScore;
       return {
         ...institution,
         authors: rankedAuthors,
-        raw_score: normInstitutionRawScore,
+        raw_score: normRawScore,
         score: finalScore,
       };
     }),

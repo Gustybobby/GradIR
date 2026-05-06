@@ -6,6 +6,7 @@ import React from "react";
 
 export function useSearch() {
   const searchParams = useSearchParams();
+  const initialQueryRef = React.useRef<string>(searchParams.get("query") ?? "");
 
   const [results, setResults] =
     React.useState<InstitutionRankedSearchResult[]>();
@@ -19,14 +20,13 @@ export function useSearch() {
   }, []);
 
   React.useEffect(() => {
-    const initialQuery = searchParams.get("query") ?? "";
-    if (!initialQuery) {
+    if (!initialQueryRef.current) {
       return;
     }
-    callSearchAPI({ query: initialQuery })
+    callSearchAPI({ query: initialQueryRef.current })
       .then(setResults)
       .finally(() => setIsFetching(false));
-  }, [searchParams, search]);
+  }, [search]);
 
   return {
     results,
