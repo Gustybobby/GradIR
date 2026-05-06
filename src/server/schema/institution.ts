@@ -1,5 +1,6 @@
 import { AuthorRankedSearchResult } from "@/server/schema/author";
 import { Score, With } from "@/server/types/util";
+import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
 
 export const INSTITUTION_INDEX_NAME = "institution";
@@ -12,7 +13,7 @@ export const INSTITUTION_INDEX_MAPPINGS = {
     website: { type: "keyword" },
     type: { type: "keyword" },
   },
-} as const;
+} as const satisfies MappingTypeMapping;
 
 export const InstitutionDB = z.object({
   id: z.string(),

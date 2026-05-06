@@ -25,6 +25,8 @@ export async function PUT(req: NextRequest) {
     await authorizeAPIKey();
     const data = AuthorUpsert.parse(await getJsonBody(req));
     const author = await indexAuthor(data);
-    return NextResponse.json(author, { status: data.id ? 200 : 201 });
+    const isCreated =
+      author.created_at.getTime() === author.updated_at.getTime();
+    return NextResponse.json(author, { status: isCreated ? 201 : 200 });
   });
 }

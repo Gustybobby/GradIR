@@ -1,5 +1,6 @@
 import { PaperWithScore } from "@/server/schema/paper";
 import { Highlight, Score, With } from "@/server/types/util";
+import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
 
 export const AUTHOR_INDEX_NAME = "author";
@@ -13,7 +14,7 @@ export const AUTHOR_INDEX_MAPPINGS = {
     semantic_summary: { type: "semantic_text" },
     summary: { type: "text", copy_to: "semantic_summary" },
   },
-} as const;
+} as const satisfies MappingTypeMapping;
 
 export const AuthorDB = z.object({
   id: z.string(),

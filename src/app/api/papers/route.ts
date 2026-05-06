@@ -21,7 +21,8 @@ export async function PUT(req: NextRequest) {
   return handle(async () => {
     await authorizeAPIKey();
     const data = PaperUpsert.parse(await getJsonBody(req));
-    const result = await indexPaper(data);
-    return NextResponse.json(result, { status: data.id ? 200 : 201 });
+    const paper = await indexPaper(data);
+    const isCreated = paper.created_at.getTime() === paper.updated_at.getTime();
+    return NextResponse.json(paper, { status: isCreated ? 201 : 200 });
   });
 }

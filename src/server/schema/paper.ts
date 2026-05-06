@@ -1,4 +1,5 @@
 import { Score, With } from "@/server/types/util";
+import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
 
 export const PAPER_INDEX_NAME = "paper";
@@ -11,7 +12,7 @@ export const PAPER_INDEX_MAPPINGS = {
     citations: { type: "integer" },
     published_at: { type: "date" },
   },
-} as const;
+} as const satisfies MappingTypeMapping;
 
 export const PaperDB = z.object({
   id: z.string(),

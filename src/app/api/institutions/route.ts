@@ -25,6 +25,8 @@ export async function PUT(req: NextRequest) {
     await authorizeAPIKey();
     const data = InstitutionUpsert.parse(await getJsonBody(req));
     const institution = await indexInstitution(data);
-    return NextResponse.json(institution, { status: data.id ? 200 : 201 });
+    const isCreated =
+      institution.created_at.getTime() === institution.updated_at.getTime();
+    return NextResponse.json(institution, { status: isCreated ? 201 : 200 });
   });
 }
