@@ -21,7 +21,7 @@ export function SearchInput({ isLoading, onValueChange, ...props }: Props) {
         {isLoading ? <Spinner /> : <SearchIcon />}
       </div>
       <input
-        className="w-full outline-none py-2 rounded-r-full"
+        className="w-full outline-none py-2 rounded-r-full text-lg"
         data-slot="input-control"
         placeholder="Search..."
         autoComplete="off"
