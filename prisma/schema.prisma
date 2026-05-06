@@ -8,33 +8,31 @@ datasource db {
 }
 
 model Institution {
-  id          String   @id @default(uuid())
+  id         String   @id
   // title       String
   // location    String
   // country     String
-  address     String
-  lat         Float
-  long        Float
+  address    String
+  lat        Float
+  long       Float
   // website     String
-  openalex_id String   @unique
   // type        String
-  updated_at  DateTime @updatedAt
-  created_at  DateTime @default(now())
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
 
   authors Author[]
   papers  Paper[]
 }
 
 model Author {
-  id          String   @id @default(uuid())
+  id         String   @id
   // full_name    String
   // display_name String
-  openalex_id String   @unique
   // orcid        String
   // h_index      Int
   // summary      String
-  updated_at  DateTime @updatedAt
-  created_at  DateTime @default(now())
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
 
   institution    Institution @relation(fields: [institution_id], references: [id])
   institution_id String
@@ -45,15 +43,14 @@ model Author {
 }
 
 model Paper {
-  id          String   @id @default(uuid())
-  doi         String   @unique
+  id         String   @id
+  doi        String   @unique
   // title       String
   // abstract     String
-  openalex_id String   @unique
   // published_at DateTime
   // citations    Int
-  updated_at  DateTime @updatedAt
-  created_at  DateTime @default(now())
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
 
   authors      Author[]
   institutions Institution[]

@@ -12,18 +12,18 @@ export const indexInstitution = async (
 ): Promise<Institution> => {
   const document = InstitutionIndex.parse(data);
   const institution = await prisma.institution.upsert({
-    where: { id: data.id ?? "" },
+    where: { id: data.id },
     create: {
+      id: data.id,
       address: data.address,
       lat: data.lat,
       long: data.long,
-      openalex_id: data.openalex_id,
     },
     update: {
+      id: data.id,
       address: data.address,
       lat: data.lat,
       long: data.long,
-      openalex_id: data.openalex_id,
     },
   });
   await elastic.index({
@@ -40,17 +40,15 @@ export const indexManyInstitutions = async (
   const institutions = await prisma.institution
     .createManyAndReturn({
       data: data.map((institution) => ({
+        id: institution.id,
         address: institution.address,
         lat: institution.lat,
         long: institution.long,
-        openalex_id: institution.openalex_id,
       })),
     })
     .then((institutions) =>
       institutions.map((institution) => ({
-        ...InstitutionIndex.parse(
-          data.find((d) => d.openalex_id === institution.openalex_id),
-        ),
+        ...InstitutionIndex.parse(data.find((d) => d.id === institution.id)),
         ...institution,
       })),
     );

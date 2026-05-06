@@ -16,7 +16,6 @@ export const PAPER_INDEX_MAPPINGS = {
 export const PaperDB = z.object({
   id: z.string(),
   doi: z.string(),
-  openalex_id: z.string(),
   updated_at: z.date(),
   created_at: z.date(),
 });
@@ -37,11 +36,9 @@ export const Paper = PaperDB.extend(PaperIndex.shape);
 export type Paper = z.infer<typeof Paper>;
 
 export const PaperUpsert = Paper.omit({
-  id: true,
   updated_at: true,
   created_at: true,
 }).extend({
-  id: z.string().optional(),
   author_ids: z.array(z.string()),
   institution_ids: z.array(z.string()),
 });

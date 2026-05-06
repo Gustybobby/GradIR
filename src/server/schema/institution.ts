@@ -20,7 +20,6 @@ export const InstitutionDB = z.object({
   location: z.string(),
   lat: z.number(),
   long: z.number(),
-  openalex_id: z.string(),
   updated_at: z.date(),
   created_at: z.date(),
 });
@@ -39,11 +38,8 @@ export const Institution = InstitutionDB.extend(InstitutionIndex.shape);
 export type Institution = z.infer<typeof Institution>;
 
 export const InstitutionUpsert = Institution.omit({
-  id: true,
   updated_at: true,
   created_at: true,
-}).extend({
-  id: z.string().optional(),
 });
 export type InstitutionUpsert = z.infer<typeof InstitutionUpsert>;
 

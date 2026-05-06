@@ -10,13 +10,13 @@ import {
 export const indexAuthor = async (data: AuthorUpsert): Promise<Author> => {
   const document = AuthorIndex.parse(data);
   const author = await prisma.author.upsert({
-    where: { id: data.id ?? "" },
+    where: { id: data.id },
     create: {
-      openalex_id: data.openalex_id,
+      id: data.id,
       institution_id: data.institution_id,
     },
     update: {
-      openalex_id: data.openalex_id,
+      id: data.id,
       institution_id: data.institution_id,
     },
   });
@@ -30,15 +30,13 @@ export const indexManyAuthors = async (
   const authors = await prisma.author
     .createManyAndReturn({
       data: data.map((author) => ({
-        openalex_id: author.openalex_id,
+        id: author.id,
         institution_id: author.institution_id,
       })),
     })
     .then((authors) =>
       authors.map((author) => ({
-        ...AuthorIndex.parse(
-          data.find((d) => d.openalex_id === author.openalex_id),
-        ),
+        ...AuthorIndex.parse(data.find((d) => d.id === author.id)),
         ...author,
       })),
     );

@@ -17,7 +17,6 @@ export const AUTHOR_INDEX_MAPPINGS = {
 
 export const AuthorDB = z.object({
   id: z.string(),
-  openalex_id: z.string(),
   updated_at: z.date(),
   created_at: z.date(),
   institution_id: z.string(),
@@ -37,11 +36,8 @@ export const Author = AuthorDB.extend(AuthorIndex.shape);
 export type Author = z.infer<typeof Author>;
 
 export const AuthorUpsert = Author.omit({
-  id: true,
   updated_at: true,
   created_at: true,
-}).extend({
-  id: z.string().optional(),
 });
 export type AuthorUpsert = z.infer<typeof AuthorUpsert>;
 
