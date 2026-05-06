@@ -6,17 +6,25 @@ export async function handle<T>(
 ): Promise<NextResponse | Response> {
   return callback().catch((error) => {
     console.error(error);
-    if (error instanceof Error) {
-      if (error.message === "unauthenticated") {
-        return NextResponse.json(null, { status: 401 });
-      }
-      if (error.message === "unauthorized") {
-        return NextResponse.json(null, { status: 403 });
-      }
-    }
     if (error instanceof ZodError) {
       return NextResponse.json(error.issues, { status: 400 });
+    }
+    if (error instanceof Error) {
+      if (error.message === "unauthenticated") {
+        return NextResponse.json(error.message, { status: 401 });
+      }
+      if (error.message === "unauthorized") {
+        return NextResponse.json(error.message, { status: 403 });
+      }
+      if (error.message === "invalid json") {
+        return NextResponse.json(error.message, { status: 400 });
+      }
     }
     return NextResponse.json(null, { status: 500 });
   });
 }
+
+export const getJsonBody = (req: Request): Promise<unknown> =>
+  req.json().catch(() => {
+    throw new Error("invalid json");
+  });

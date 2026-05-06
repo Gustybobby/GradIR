@@ -27,3 +27,31 @@ export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
   await elastic.index({ index: PAPER_INDEX_NAME, id: paper.id, document });
   return { ...paper, ...document };
 };
+
+export const indexManyPapers = async (
+  data: PaperUpsert[],
+): Promise<Paper[]> => {
+  const papers = await prisma.paper
+    .createManyAndReturn({
+      data: data.map((paper) => ({
+        doi: paper.doi,
+        openalex_id: paper.openalex_id,
+        authors: { connect: paper.author_ids.map((id) => ({ id })) },
+        institutions: { connect: paper.institution_ids.map((id) => ({ id })) },
+      })),
+    })
+    .then((papers) =>
+      papers.map((paper) => ({
+        ...PaperIndex.parse(
+          data.find((d) => d.openalex_id === paper.openalex_id),
+        ),
+        ...paper,
+      })),
+    );
+  const operations = papers.flatMap((paper) => {
+    const document = PaperIndex.parse(paper);
+    return [{ index: { _index: PAPER_INDEX_NAME, _id: paper.id } }, document];
+  });
+  await elastic.bulk({ index: PAPER_INDEX_NAME, operations });
+  return papers;
+};

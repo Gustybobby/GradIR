@@ -19,7 +19,7 @@ export function SearchResult({ institution }: Props) {
       <div className="grid gap-1">
         <header>
           <PrimaryHeading className="hover:underline underline-offset-2">
-            <Link href={`/institutions/${institution.id}`}>
+            <Link href={institution.website} target="_blank">
               {institution.title}
             </Link>
           </PrimaryHeading>

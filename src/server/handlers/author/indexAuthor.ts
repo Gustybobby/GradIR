@@ -23,3 +23,29 @@ export const indexAuthor = async (data: AuthorUpsert): Promise<Author> => {
   await elastic.index({ index: AUTHOR_INDEX_NAME, id: author.id, document });
   return { ...author, ...document };
 };
+
+export const indexManyAuthors = async (
+  data: AuthorUpsert[],
+): Promise<Author[]> => {
+  const authors = await prisma.author
+    .createManyAndReturn({
+      data: data.map((author) => ({
+        openalex_id: author.openalex_id,
+        institution_id: author.institution_id,
+      })),
+    })
+    .then((authors) =>
+      authors.map((author) => ({
+        ...AuthorIndex.parse(
+          data.find((d) => d.openalex_id === author.openalex_id),
+        ),
+        ...author,
+      })),
+    );
+  const operations = authors.flatMap((author) => {
+    const document = AuthorIndex.parse(author);
+    return [{ index: { _index: AUTHOR_INDEX_NAME, _id: author.id } }, document];
+  });
+  await elastic.bulk({ index: AUTHOR_INDEX_NAME, operations });
+  return authors;
+};

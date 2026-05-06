@@ -33,3 +33,34 @@ export const indexInstitution = async (
   });
   return { ...institution, ...document };
 };
+
+export const indexManyInstitutions = async (
+  data: InstitutionUpsert[],
+): Promise<Institution[]> => {
+  const institutions = await prisma.institution
+    .createManyAndReturn({
+      data: data.map((institution) => ({
+        address: institution.address,
+        lat: institution.lat,
+        long: institution.long,
+        openalex_id: institution.openalex_id,
+      })),
+    })
+    .then((institutions) =>
+      institutions.map((institution) => ({
+        ...InstitutionIndex.parse(
+          data.find((d) => d.openalex_id === institution.openalex_id),
+        ),
+        ...institution,
+      })),
+    );
+  const operations = institutions.flatMap((institution) => {
+    const document = InstitutionIndex.parse(institution);
+    return [
+      { index: { _index: INSTITUTION_INDEX_NAME, _id: institution.id } },
+      document,
+    ];
+  });
+  await elastic.bulk({ index: INSTITUTION_INDEX_NAME, operations });
+  return institutions;
+};
