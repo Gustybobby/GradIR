@@ -13,6 +13,8 @@
   --color-border: var(--color-zinc-500);
   --color-input: var(--color-zinc-700);
   --color-primary-background: var(--color-zinc-950);
+  --color-card: var(--color-zinc-900);
+  --color-card-header: var(--color-zinc-800);
 }
 
 @media (prefers-color-scheme: dark) {
