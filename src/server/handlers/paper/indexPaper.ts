@@ -50,6 +50,13 @@ export const indexManyPapers = async (
     const document = PaperIndex.parse(paper);
     return [{ index: { _index: PAPER_INDEX_NAME, _id: paper.id } }, document];
   });
-  await elastic.bulk({ index: PAPER_INDEX_NAME, operations });
+  await elastic
+    .bulk({ index: PAPER_INDEX_NAME, operations })
+    .catch(async (error) => {
+      await prisma.paper.deleteMany({
+        where: { id: { in: papers.map((paper) => paper.id) } },
+      });
+      throw error;
+    });
   return papers;
 };

@@ -44,6 +44,13 @@ export const indexManyAuthors = async (
     const document = AuthorIndex.parse(author);
     return [{ index: { _index: AUTHOR_INDEX_NAME, _id: author.id } }, document];
   });
-  await elastic.bulk({ index: AUTHOR_INDEX_NAME, operations });
+  await elastic
+    .bulk({ index: AUTHOR_INDEX_NAME, operations })
+    .catch(async (error) => {
+      await prisma.author.deleteMany({
+        where: { id: { in: authors.map((author) => author.id) } },
+      });
+      throw error;
+    });
   return authors;
 };

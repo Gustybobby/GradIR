@@ -59,6 +59,15 @@ export const indexManyInstitutions = async (
       document,
     ];
   });
-  await elastic.bulk({ index: INSTITUTION_INDEX_NAME, operations });
+  await elastic
+    .bulk({ index: INSTITUTION_INDEX_NAME, operations })
+    .catch(async (error) => {
+      await prisma.institution.deleteMany({
+        where: {
+          id: { in: institutions.map((institution) => institution.id) },
+        },
+      });
+      throw error;
+    });
   return institutions;
 };
