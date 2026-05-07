@@ -4,16 +4,9 @@ import { useSearch } from "@/client/hooks/useSearch";
 import { SearchResultList } from "@/client/search/SearchResultList";
 import { SearchInput } from "@/client/ui/SearchInput";
 import { PrimaryHeading } from "@/client/ui/Typography";
-import { usePathname, useSearchParams } from "next/navigation";
-import React from "react";
 
 export function Search() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const { result, isFetching, paramsQuery, search } = useSearch();
-
-  const [query, setQuery] = React.useState<string>(paramsQuery);
+  const { query, result, isFetching, setQuery, search } = useSearch();
 
   return (
     <div className="min-h-screen">
@@ -28,13 +21,6 @@ export function Search() {
             if (!query) {
               return;
             }
-            const params = new URLSearchParams(searchParams);
-            params.set("query", query);
-            window.history.pushState(
-              {},
-              "",
-              `${pathname}?${params.toString()}`,
-            );
             search({ query });
           }}
         >

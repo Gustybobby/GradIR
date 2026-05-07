@@ -40,9 +40,11 @@ export function SearchResult({ rank, institution, papers }: Props) {
       </header>
       <Separator />
       <div className="grid gap-1 p-4">
-        <TertiaryHeading>
-          {`Top ${institution.authors.length}`} Matched Researchers
-        </TertiaryHeading>
+        {institution.authors.length ? (
+          <TertiaryHeading>
+            {`Top ${institution.authors.length}`} Matched Researchers
+          </TertiaryHeading>
+        ) : null}
         <div className="flex flex-wrap space-x-2 space-y-1">
           {institution.authors.map((author) => (
             <Link
@@ -58,33 +60,33 @@ export function SearchResult({ rank, institution, papers }: Props) {
         </div>
       </div>
       <Separator />
-      {institutionPapers.length ? (
-        <div className="grid gap-1 p-4">
+      <div className="grid gap-1 p-4">
+        {institutionPapers.length ? (
           <TertiaryHeading>
             {`Top ${institutionPapers.length}`} Matched Publications
           </TertiaryHeading>
-          <ol className="list-decimal list-inside space-y-1">
-            {institutionPapers.map((paper) => (
-              <li key={paper.id}>
-                <Link
-                  href={paper.doi}
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  {paper.title}
-                </Link>
-                <Paragraph>
-                  {new Date(paper.published_at).toLocaleDateString()},{" "}
-                  {paper.citations} citations
-                </Paragraph>
-                <ParagraphCaption className="mt-1 line-clamp-2 italic">
-                  {paper.abstract}
-                </ParagraphCaption>
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : null}
+        ) : null}
+        <ol className="list-decimal list-inside space-y-1">
+          {institutionPapers.map((paper) => (
+            <li key={paper.id}>
+              <Link
+                href={paper.doi}
+                target="_blank"
+                className="hover:underline"
+              >
+                {paper.title}
+              </Link>
+              <Paragraph>
+                {new Date(paper.published_at).toLocaleDateString()},{" "}
+                {paper.citations} citations
+              </Paragraph>
+              <ParagraphCaption className="mt-1 line-clamp-2 italic">
+                {paper.abstract}
+              </ParagraphCaption>
+            </li>
+          ))}
+        </ol>
+      </div>
     </article>
   );
 }

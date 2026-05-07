@@ -1,7 +1,13 @@
 import { HomeSearchBox } from "@/client/home/HomeSearchBox";
 import { Paragraph } from "@/client/ui/Typography";
 
-export function Home() {
+interface Props {
+  institutionCount: number;
+  authorCount: number;
+  paperCount: number;
+}
+
+export function Home({ institutionCount, authorCount, paperCount }: Props) {
   return (
     <main className="w-full h-screen flex items-center justify-center">
       <div className="flex flex-col w-full items-center">
@@ -13,6 +19,10 @@ export function Home() {
           course, THU
         </Paragraph>
         <HomeSearchBox />
+        <Paragraph className="text-center mt-6">
+          {institutionCount} institutions, {authorCount} researchers,{" "}
+          {paperCount} publications
+        </Paragraph>
       </div>
     </main>
   );
