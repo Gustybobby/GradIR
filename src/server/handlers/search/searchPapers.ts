@@ -6,6 +6,7 @@ import {
   PaperWithScore,
 } from "@/server/schema/paper";
 import { SearchOptions } from "@/server/schema/search";
+import { RRFRetrieverEntry } from "@elastic/elasticsearch/lib/api/types";
 
 /**
  * ### Search paper index by query.
@@ -15,57 +16,58 @@ import { SearchOptions } from "@/server/schema/search";
 export const searchPapers = async (
   options: SearchOptions,
 ): Promise<PaperWithScore[]> => {
+  const retrievers: RRFRetrieverEntry[] = [
+    {
+      standard: {
+        query: {
+          function_score: {
+            query: {
+              multi_match: {
+                query: options.query,
+                fields: ["title^2", "abstract"],
+              },
+            },
+            functions: [
+              {
+                field_value_factor: {
+                  field: "citations",
+                  modifier: "ln1p",
+                  missing: 0,
+                },
+              },
+              {
+                gauss: {
+                  published_at: {
+                    origin: "now",
+                    scale: "7000d",
+                    offset: "700d",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+  ];
+
+  if (options.semantic) {
+    retrievers.push({
+      standard: {
+        query: {
+          semantic: {
+            field: "semantic_title",
+            query: options.query,
+          },
+        },
+      },
+    });
+  }
+
   const result = await elastic
     .search<PaperIndex>({
       index: PAPER_INDEX_NAME,
-      retriever: {
-        rrf: {
-          retrievers: [
-            {
-              standard: {
-                query: {
-                  function_score: {
-                    query: {
-                      multi_match: {
-                        query: options.query,
-                        fields: ["title^2", "abstract"],
-                      },
-                    },
-                    functions: [
-                      {
-                        field_value_factor: {
-                          field: "citations",
-                          modifier: "ln1p",
-                          missing: 0,
-                        },
-                      },
-                      {
-                        gauss: {
-                          published_at: {
-                            origin: "now",
-                            scale: "7000d",
-                            offset: "700d",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-            {
-              standard: {
-                query: {
-                  semantic: {
-                    field: "semantic_title",
-                    query: options.query,
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
+      retriever: { rrf: { retrievers } },
     })
     .catch((error) => {
       const errorInfo = error.meta?.body?.error;

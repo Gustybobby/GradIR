@@ -7,6 +7,18 @@ import { getRankedAuthors } from "@/server/handlers/search/rankAuthors";
 import { getRankedInstitutions } from "@/server/handlers/search/rankInstitutions";
 import { compressSearchResults } from "@/server/handlers/search/compress";
 
+const authorRankConfig = {
+  raw: 0.3,
+  papers_recall: 0.7,
+  papers_top_k: 3,
+};
+
+const institutionRankConfig = {
+  raw: 0.3,
+  authors_recall: 0.7,
+  authors_top_k: 3,
+};
+
 export const searchRankedInstitutions = async (
   options: SearchOptions,
 ): Promise<CompressedInstitutionRankedSearchResult> => {
@@ -15,15 +27,15 @@ export const searchRankedInstitutions = async (
     searchAuthors(options),
     searchInstitutions(options),
   ]);
-  const rankedAuthors = await getRankedAuthors(papers, authors, {
-    raw: 0.3,
-    papers_recall: 0.2,
-    papers_quality: 0.5,
-  });
+  const rankedAuthors = await getRankedAuthors(
+    papers,
+    authors,
+    authorRankConfig,
+  );
   const rankedInstitutions = await getRankedInstitutions(
     rankedAuthors,
     institutions,
-    { raw: 0.3, authors_recall: 0.2, authors_quality: 0.5 },
+    institutionRankConfig,
   );
   return compressSearchResults(rankedInstitutions);
 };

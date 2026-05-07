@@ -1,9 +1,4 @@
-import {
-  averageScore,
-  getScoreSorted,
-  maxScore,
-  sumScore,
-} from "@/server/handlers/search/utils";
+import { getScoreSorted, sumScore } from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
 import {
@@ -19,14 +14,13 @@ import { With } from "@/server/types/util";
 /**
  * #### Rank authors
  * - Rank authors by linear combination of normalized author profile and papers score.
- * - `aut_score` = Norm(`aut_raw_score`) + Norm(sum(`aut_paper_score`)) + Norm(avg(`aut_paper_score`))
+ * - `aut_score` = Norm(`aut_raw_score`) + Norm(top_k_sum(`aut_paper_score`))
  * - 2nd term is author's papers score-weighted recall.
- * - 3rd term is author's papers quality.
  */
 export const getRankedAuthors = async (
   papers: PaperWithScore[],
   authors: AuthorWithScore[],
-  weights: { raw: number; papers_recall: number; papers_quality: number },
+  weights: { raw: number; papers_recall: number; papers_top_k: number },
 ): Promise<AuthorRankedSearchResult[]> => {
   const unionAuthors = await getAuthorsByIds(
     authors.map((author) => author.id),
@@ -36,7 +30,6 @@ export const getRankedAuthors = async (
   const authorsRecord = new Map(authors.map((author) => [author.id, author]));
 
   const paperScoreSum = sumScore(papers) + 1;
-  const paperMaxScore = maxScore(papers) + 1;
   const authorScoreSum = sumScore(authors) + 1;
 
   return getScoreSorted(
@@ -49,14 +42,11 @@ export const getRankedAuthors = async (
       };
       const rankedPapers = getScoreSorted(
         unionAuthor.papers.map((paper) => papersRecord.get(paper.id)!),
-      );
+      ).slice(0, weights.papers_top_k);
       const normRawScore = (weights.raw * author.score) / authorScoreSum;
       const normPapersRecallScore =
         (weights.papers_recall * sumScore(rankedPapers)) / paperScoreSum;
-      const normPapersQualityScore =
-        (weights.papers_quality * averageScore(rankedPapers)) / paperMaxScore;
-      const finalScore =
-        normRawScore + normPapersRecallScore + normPapersQualityScore;
+      const finalScore = normRawScore + normPapersRecallScore;
       return {
         ...author,
         papers: rankedPapers,

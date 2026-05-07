@@ -6,6 +6,7 @@ import {
   AuthorWithScore,
 } from "@/server/schema/author";
 import { SearchOptions } from "@/server/schema/search";
+import { RRFRetrieverEntry } from "@elastic/elasticsearch/lib/api/types";
 
 /**
  * ### Search author index by query.
@@ -14,54 +15,53 @@ import { SearchOptions } from "@/server/schema/search";
 export const searchAuthors = async (
   options: SearchOptions,
 ): Promise<AuthorWithScore[]> => {
-  const result = await elastic.search<AuthorIndex>({
-    index: AUTHOR_INDEX_NAME,
-    retriever: {
-      rrf: {
-        retrievers: [
-          {
-            standard: {
-              query: {
-                function_score: {
-                  query: {
-                    multi_match: {
-                      query: options.query,
-                      fields: [
-                        "full_name",
-                        "display_name",
-                        "orcid",
-                        "summary^2",
-                      ],
-                    },
-                  },
-                  functions: [
-                    {
-                      field_value_factor: {
-                        field: "h_index",
-                        modifier: "sqrt",
-                        missing: 0,
-                      },
-                    },
-                  ],
-                },
+  const retrievers: RRFRetrieverEntry[] = [
+    {
+      standard: {
+        query: {
+          function_score: {
+            query: {
+              multi_match: {
+                query: options.query,
+                fields: ["full_name", "display_name", "orcid", "summary^2"],
               },
             },
-          },
-          {
-            standard: {
-              query: {
-                semantic: {
-                  field: "semantic_summary",
-                  query: options.query,
+            functions: [
+              {
+                field_value_factor: {
+                  field: "h_index",
+                  modifier: "sqrt",
+                  missing: 0,
                 },
               },
-            },
+            ],
           },
-        ],
+        },
       },
     },
+  ];
+
+  if (options.semantic) {
+    retrievers.push({
+      standard: {
+        query: {
+          semantic: {
+            field: "semantic_summary",
+            query: options.query,
+          },
+        },
+      },
+    });
+  }
+
+  const result = await elastic.search<AuthorIndex>({
+    index: AUTHOR_INDEX_NAME,
+    retriever: { rrf: { retrievers } },
     highlight: {
-      fields: { summary: {}, semantic_summary: {} },
+      fields: {
+        summary: {},
+        semantic_summary: {},
+      },
     },
   });
   const docs = result.hits.hits.map((hit) => ({

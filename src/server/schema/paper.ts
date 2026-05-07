@@ -6,8 +6,8 @@ export const PAPER_INDEX_NAME = "paper";
 
 export const PAPER_INDEX_MAPPINGS = {
   properties: {
-    semantic_title: { type: "semantic_text" },
-    title: { type: "text", copy_to: "semantic_title" },
+    // semantic_title: { type: "semantic_text" },
+    title: { type: "text" },
     abstract: { type: "text" },
     citations: { type: "integer" },
     published_at: { type: "date" },

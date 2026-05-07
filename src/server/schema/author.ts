@@ -11,8 +11,8 @@ export const AUTHOR_INDEX_MAPPINGS = {
     display_name: { type: "text" },
     h_index: { type: "integer" },
     orc_id: { type: "keyword" },
-    semantic_summary: { type: "semantic_text" },
-    summary: { type: "text", copy_to: "semantic_summary" },
+    // semantic_summary: { type: "semantic_text" },
+    summary: { type: "text" },
   },
 } as const satisfies MappingTypeMapping;
 

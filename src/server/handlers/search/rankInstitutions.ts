@@ -1,9 +1,4 @@
-import {
-  averageScore,
-  getScoreSorted,
-  maxScore,
-  sumScore,
-} from "@/server/handlers/search/utils";
+import { getScoreSorted, sumScore } from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
 import { AuthorRankedSearchResult } from "@/server/schema/author";
@@ -18,14 +13,13 @@ import {
 /**
  * #### Rank institutions
  * - Rank institutions by linear combination of normalized institution profile and researchers (authors) score.
- * - `inst_score` = Norm(`inst_raw_score`) + Norm(sum(`inst_aut_score`)) + Norm(avg(`inst_aut_score`))
+ * - `inst_score` = Norm(`inst_raw_score`) + Norm(top_k_sum(`inst_aut_score`))
  * - 2nd term is institution's researchers score-weighted recall.
- * - 3rd term is institution's researchers quality.
  */
 export const getRankedInstitutions = async (
   authors: AuthorRankedSearchResult[],
   institutions: InstitutionWithScore[],
-  weights: { raw: number; authors_recall: number; authors_quality: number },
+  weights: { raw: number; authors_recall: number; authors_top_k: number },
 ): Promise<InstitutionRankedSearchResult[]> => {
   const institutionIds = [
     ...institutions.map((institution) => institution.id),
@@ -38,7 +32,6 @@ export const getRankedInstitutions = async (
   );
 
   const authorScoreSum = sumScore(authors) + 1;
-  const authorMaxScore = maxScore(authors) + 1;
   const institutionScoreSum = sumScore(institutions) + 1;
 
   return getScoreSorted(
@@ -50,16 +43,12 @@ export const getRankedInstitutions = async (
       };
       const rankedAuthors = getScoreSorted(
         authors.filter((author) => author.institution_id === institution.id),
-      );
+      ).slice(0, weights.authors_top_k);
       const normRawScore =
         (weights.raw * institution.score) / institutionScoreSum;
       const normAuthorsRecallScore =
         (weights.authors_recall * sumScore(rankedAuthors)) / authorScoreSum;
-      const normAuthorsQualityScore =
-        (weights.authors_quality * averageScore(rankedAuthors)) /
-        authorMaxScore;
-      const finalScore =
-        normRawScore + normAuthorsRecallScore + normAuthorsQualityScore;
+      const finalScore = normRawScore + normAuthorsRecallScore;
       return {
         ...institution,
         authors: rankedAuthors,
