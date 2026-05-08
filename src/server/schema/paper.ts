@@ -1,4 +1,4 @@
-import { Score, With } from "@/server/types/util";
+import { Highlight, Score, With } from "@/server/types/util";
 import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
 
@@ -45,4 +45,4 @@ export const PaperUpsert = Paper.omit({
 });
 export type PaperUpsert = z.infer<typeof PaperUpsert>;
 
-export type PaperWithScore = With<Score, Paper>;
+export type PaperWithScore = With<Score & Highlight, Paper>;

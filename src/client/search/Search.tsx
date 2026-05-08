@@ -25,6 +25,7 @@ export function Search() {
           }}
         >
           <SearchInput
+            name="search-query"
             value={query}
             onValueChange={(value) => {
               setQuery(value);

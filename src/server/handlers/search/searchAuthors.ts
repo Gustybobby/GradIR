@@ -57,12 +57,6 @@ export const searchAuthors = async (
   const result = await elastic.search<AuthorIndex>({
     index: AUTHOR_INDEX_NAME,
     retriever: { rrf: { retrievers } },
-    highlight: {
-      fields: {
-        summary: {},
-        semantic_summary: {},
-      },
-    },
   });
   const docs = result.hits.hits.map((hit) => ({
     ...hit._source!,

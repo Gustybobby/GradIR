@@ -68,6 +68,11 @@ export const searchPapers = async (
     .search<PaperIndex>({
       index: PAPER_INDEX_NAME,
       retriever: { rrf: { retrievers } },
+      highlight: {
+        fields: {
+          abstract: { pre_tags: [""], post_tags: [""] },
+        },
+      },
     })
     .catch((error) => {
       const errorInfo = error.meta?.body?.error;
@@ -78,6 +83,7 @@ export const searchPapers = async (
     });
   const docs = result.hits.hits.map((hit) => ({
     ...hit._source!,
+    highlight: hit.highlight ?? {},
     id: hit._id!,
     raw_score: hit._score ?? 0,
     score: hit._score ?? 0,

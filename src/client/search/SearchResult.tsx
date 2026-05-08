@@ -66,25 +66,32 @@ export function SearchResult({ rank, institution, papers }: Props) {
             {`Top ${institutionPapers.length}`} Matched Publications
           </TertiaryHeading>
         ) : null}
-        <ol className="list-decimal list-inside space-y-1">
-          {institutionPapers.map((paper) => (
-            <li key={paper.id}>
-              <Link
-                href={paper.doi}
-                target="_blank"
-                className="hover:underline"
-              >
-                {paper.title}
-              </Link>
-              <Paragraph>
-                {new Date(paper.published_at).toLocaleDateString()},{" "}
-                {paper.citations} citations
-              </Paragraph>
-              <ParagraphCaption className="mt-1 line-clamp-2 italic">
-                {paper.abstract}
-              </ParagraphCaption>
-            </li>
-          ))}
+        <ol className="list-decimal list-inside space-y-2">
+          {institutionPapers.map((paper) => {
+            const abstractHighlights = paper.highlight["abstract"];
+            return (
+              <li key={paper.id}>
+                <Link
+                  href={paper.doi}
+                  target="_blank"
+                  className="hover:underline"
+                >
+                  {paper.title}
+                </Link>
+                <Paragraph className="mb-1">
+                  {new Date(paper.published_at).toLocaleDateString()},{" "}
+                  {paper.citations} citations
+                </Paragraph>
+                <Separator />
+                <ParagraphCaption className="mt-1 italic line-clamp-2">
+                  {abstractHighlights
+                    ?.slice(0, 2)
+                    .join(" ... ")
+                    .concat("...") ?? paper.abstract}
+                </ParagraphCaption>
+              </li>
+            );
+          })}
         </ol>
       </div>
     </article>
