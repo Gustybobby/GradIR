@@ -8,6 +8,7 @@ import {
   TertiaryHeading,
 } from "@/client/ui/Typography";
 import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
+import { PaperWithScore } from "@/server/schema/paper";
 import { UserCircle2Icon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -67,34 +68,37 @@ export function SearchResult({ rank, institution, papers }: Props) {
           </TertiaryHeading>
         ) : null}
         <ol className="list-decimal list-inside space-y-2">
-          {institutionPapers.map((paper) => {
-            const abstractHighlights = paper.highlight["abstract"];
-            return (
-              <li key={paper.id}>
-                <Link
-                  href={paper.doi}
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  {paper.title}
-                </Link>
-                <Paragraph className="mb-1">
-                  {new Date(paper.published_at).toLocaleDateString()},{" "}
-                  {paper.citations} citations
-                </Paragraph>
-                <Separator />
-                <ParagraphCaption className="mt-1 italic line-clamp-2">
-                  {abstractHighlights
-                    ?.slice(0, 2)
-                    .join(" ... ")
-                    .concat("...") ?? paper.abstract}
-                </ParagraphCaption>
-              </li>
-            );
-          })}
+          {institutionPapers.map((paper) => (
+            <PaperListItem key={paper.id} paper={paper} />
+          ))}
         </ol>
       </div>
     </article>
+  );
+}
+
+function PaperListItem({ paper }: { paper: PaperWithScore }) {
+  const abstractHighlights = paper.highlight["abstract"] ?? [];
+  return (
+    <li>
+      <Link href={paper.doi} target="_blank" className="hover:underline">
+        {paper.title}
+      </Link>
+      <Paragraph className="mb-1">
+        {new Date(paper.published_at).toLocaleDateString()}, {paper.citations}{" "}
+        citations
+      </Paragraph>
+      <Separator />
+      {abstractHighlights.length ? (
+        <ParagraphCaption className="mt-1 italic">
+          {abstractHighlights.slice(0, 2).join(" ... ").concat("...")}
+        </ParagraphCaption>
+      ) : (
+        <ParagraphCaption className="mt-1 italic line-clamp-2">
+          {paper.abstract || "Missing abstract"}
+        </ParagraphCaption>
+      )}
+    </li>
   );
 }
 

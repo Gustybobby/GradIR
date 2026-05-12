@@ -11,11 +11,13 @@ export function Search() {
   return (
     <div className="min-h-screen">
       <header className="px-2 py-4 mb-8 bg-zinc-900 shadow-md border-b border-border grid grid-cols-7">
-        <div className="flex items-center justify-center">
-          <PrimaryHeading className="text-center">Grad IR</PrimaryHeading>
+        <div className="flex items-center justify-center col-span-2 md:col-span-1">
+          <PrimaryHeading className="text-center text-accent">
+            GradIR
+          </PrimaryHeading>
         </div>
         <form
-          className="col-span-full col-start-2 md:col-span-5 px-2 flex items-center"
+          className="col-span-5 col-start-3 md:col-span-5 px-2 flex items-center"
           onSubmit={(e) => {
             e.preventDefault();
             if (!query) {
