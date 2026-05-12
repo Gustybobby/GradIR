@@ -1,16 +1,18 @@
-import { searchRankedInstitutions } from "@/server/handlers/search";
+import { evaluateSearchNDCG } from "@/server/handlers/evaluation/evaluateSearchNDCG";
+import { authorizeAPIKey } from "@/server/lib/auth";
 import { handle } from "@/server/lib/handler";
 import { SearchOptions } from "@/server/schema/search";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   return handle(async () => {
+    await authorizeAPIKey();
     const searchParams = req.nextUrl.searchParams;
     const options = SearchOptions.parse({
       query: searchParams.get("query"),
       semantic: searchParams.get("semantic") ?? undefined,
     });
-    const result = await searchRankedInstitutions(options);
+    const result = await evaluateSearchNDCG(options);
     return NextResponse.json(result, { status: 200 });
   });
 }

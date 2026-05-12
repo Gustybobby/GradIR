@@ -1,3 +1,5 @@
+import { evaluate } from "@/client/api/evaluate";
+import { Button } from "@/client/ui/Button";
 import { Separator } from "@/client/ui/Separator";
 import { Skeleton } from "@/client/ui/Skeleton";
 import {
@@ -7,15 +9,19 @@ import {
   SecondaryHeading,
   TertiaryHeading,
 } from "@/client/ui/Typography";
-import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
+import {
+  CompressedInstitution,
+  CompressedInstitutionRankedSearchResult,
+} from "@/server/schema/institution";
 import { PaperWithScore } from "@/server/schema/paper";
 import { UserCircle2Icon } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import React from "react";
 
 interface Props {
   rank: number;
-  institution: CompressedInstitutionRankedSearchResult["institutions"][number];
+  institution: CompressedInstitution;
   papers: CompressedInstitutionRankedSearchResult["papers"];
 }
 
@@ -29,15 +35,18 @@ export function SearchResult({ rank, institution, papers }: Props) {
 
   return (
     <article className="bg-card rounded-lg shadow-md">
-      <header className="p-4 bg-card-header rounded-t-lg">
-        <PrimaryHeading className="hover:underline underline-offset-2">
-          <Link href={institution.website} target="_blank">
-            {rank}. {institution.title}
-          </Link>
-        </PrimaryHeading>
-        <SecondaryHeading>
-          {institution.location} | {institution.country}
-        </SecondaryHeading>
+      <header className="p-4 bg-card-header rounded-t-lg flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
+        <div>
+          <PrimaryHeading className="hover:underline underline-offset-2">
+            <Link href={institution.website} target="_blank">
+              {rank}. {institution.title}
+            </Link>
+          </PrimaryHeading>
+          <SecondaryHeading>
+            {institution.location} | {institution.country}
+          </SecondaryHeading>
+        </div>
+        <EvaluationSection institution={institution} />
       </header>
       <Separator />
       <div className="grid gap-1 p-4">
@@ -74,6 +83,50 @@ export function SearchResult({ rank, institution, papers }: Props) {
         </ol>
       </div>
     </article>
+  );
+}
+
+function EvaluationSection({
+  institution,
+}: {
+  institution: CompressedInstitution;
+}) {
+  const searchParams = useSearchParams();
+
+  const [isEvaluated, setIsEvaluated] = React.useState<boolean>(false);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+  if (isEvaluated) {
+    return null;
+  }
+
+  const scores = [0, 1, 2, 3];
+
+  return (
+    <div className="space-y-1">
+      <ParagraphCaption>How relevant is this result?</ParagraphCaption>
+      <div className="flex space-x-2">
+        {scores.map((score) => (
+          <Button
+            key={score}
+            className="size-8"
+            onClick={async () => {
+              const query = searchParams.get("query");
+              if (!query) {
+                return;
+              }
+              setIsLoading(true);
+              await evaluate({ query, score, institution_id: institution.id });
+              setIsLoading(false);
+              setIsEvaluated(true);
+            }}
+            disabled={isLoading}
+          >
+            {score}
+          </Button>
+        ))}
+      </div>
+    </div>
   );
 }
 

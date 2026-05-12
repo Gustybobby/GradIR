@@ -52,15 +52,17 @@ export type InstitutionRankedSearchResult = With<
   InstitutionWithScore
 >;
 
+export type CompressedInstitution = With<
+  {
+    authors: With<
+      { paper_ids: PaperWithScore["id"][] },
+      Omit<AuthorRankedSearchResult, "papers">
+    >[];
+  },
+  InstitutionWithScore
+>;
+
 export type CompressedInstitutionRankedSearchResult = {
-  institutions: With<
-    {
-      authors: With<
-        { paper_ids: PaperWithScore["id"][] },
-        Omit<AuthorRankedSearchResult, "papers">
-      >[];
-    },
-    InstitutionWithScore
-  >[];
+  institutions: CompressedInstitution[];
   papers: PaperWithScore[];
 };

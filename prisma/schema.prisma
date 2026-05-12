@@ -20,8 +20,9 @@ model Institution {
   updated_at DateTime @updatedAt
   created_at DateTime @default(now())
 
-  authors Author[]
-  papers  Paper[]
+  authors     Author[]
+  papers      Paper[]
+  evaluations Evaluation[]
 }
 
 model Author {
@@ -54,4 +55,17 @@ model Paper {
 
   authors      Author[]
   institutions Institution[]
+}
+
+model Evaluation {
+  id    Int    @id @default(autoincrement())
+  query String
+  score Int
+
+  created_at DateTime @default(now())
+
+  institution    Institution @relation(fields: [institution_id], references: [id])
+  institution_id String
+
+  @@index([query])
 }

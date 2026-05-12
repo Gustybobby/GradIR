@@ -4,10 +4,10 @@ import { SearchOptions } from "@/server/schema/search";
 export const search = async (
   options: SearchOptions,
 ): Promise<CompressedInstitutionRankedSearchResult> => {
-  const response = await fetch("/api/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(options),
-  });
+  const response = await fetch(
+    `/api/search?${new URLSearchParams(
+      Object.entries(options).map(([key, value]) => [key, value.toString()]),
+    ).toString()}`,
+  );
   return response.json();
 };
