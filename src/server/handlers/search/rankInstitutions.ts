@@ -1,14 +1,26 @@
-import { getScoreSorted, sumScore } from "@/server/handlers/search/utils";
+import {
+  averageScore,
+  getScoreSorted,
+  maxScore,
+  sumScore,
+} from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
 import { AuthorRankedSearchResult } from "@/server/schema/author";
+import { INSTITUTION_INDEX } from "@/server/schema/indexSetting";
 import {
   Institution,
-  INSTITUTION_INDEX_NAME,
   InstitutionIndex,
   InstitutionRankedSearchResult,
   InstitutionWithScore,
 } from "@/server/schema/institution";
+
+export interface InstitutionRankConfig {
+  top_k: number;
+  raw: number;
+  recall: number;
+  avg: number;
+}
 
 /**
  * #### Rank institutions
@@ -19,7 +31,7 @@ import {
 export const getRankedInstitutions = async (
   authors: AuthorRankedSearchResult[],
   institutions: InstitutionWithScore[],
-  weights: { raw: number; authors_recall: number; authors_top_k: number },
+  config: InstitutionRankConfig,
 ): Promise<InstitutionRankedSearchResult[]> => {
   const institutionIds = [
     ...institutions.map((institution) => institution.id),
@@ -31,8 +43,9 @@ export const getRankedInstitutions = async (
     institutions.map((institution) => [institution.id, institution]),
   );
 
-  const authorScoreSum = sumScore(authors) + 1;
-  const institutionScoreSum = sumScore(institutions) + 1;
+  const authorScoreSum = sumScore(authors);
+  const maxAuthorScoreSum = maxScore(authors);
+  const institutionScoreSum = sumScore(institutions);
 
   return getScoreSorted(
     unionInstitutions.map((unionInstitution) => {
@@ -43,12 +56,15 @@ export const getRankedInstitutions = async (
       };
       const rankedAuthors = getScoreSorted(
         authors.filter((author) => author.institution_id === institution.id),
-      ).slice(0, weights.authors_top_k);
-      const normRawScore =
-        (weights.raw * institution.score) / institutionScoreSum;
-      const normAuthorsRecallScore =
-        (weights.authors_recall * sumScore(rankedAuthors)) / authorScoreSum;
-      const finalScore = normRawScore + normAuthorsRecallScore;
+      ).slice(0, config.top_k);
+      const { finalScore, normRawScore } = calculateInstitutionScore(
+        config,
+        institution,
+        rankedAuthors,
+        institutionScoreSum,
+        authorScoreSum,
+        maxAuthorScoreSum,
+      );
       return {
         ...institution,
         authors: rankedAuthors,
@@ -65,7 +81,7 @@ const getInstitutionsByIds = async (ids: string[]): Promise<Institution[]> => {
   }
   const [institutionMetas, institutionDocs] = await Promise.all([
     prisma.institution.findMany({ where: { id: { in: ids } } }),
-    elastic.mget<InstitutionIndex>({ index: INSTITUTION_INDEX_NAME, ids }),
+    elastic.mget<InstitutionIndex>({ index: INSTITUTION_INDEX.index, ids }),
   ]);
   return institutionMetas.map((meta) => ({
     ...meta,
@@ -73,4 +89,26 @@ const getInstitutionsByIds = async (ids: string[]): Promise<Institution[]> => {
       institutionDocs.docs.find((doc) => doc._id === meta.id)!,
     )._source!,
   }));
+};
+
+const calculateInstitutionScore = (
+  config: InstitutionRankConfig,
+  institution: InstitutionWithScore,
+  rankedAuthors: AuthorRankedSearchResult[],
+  institutionScoreSum: number,
+  authorScoreSum: number,
+  maxAuthorScoreSum: number,
+) => {
+  const normRawScore = institutionScoreSum
+    ? (config.raw * institution.score) / institutionScoreSum
+    : 0;
+  const normAuthorsRecallScore = authorScoreSum
+    ? (config.recall * sumScore(rankedAuthors)) / authorScoreSum
+    : 0;
+  const normAuthorsAvgScore = maxAuthorScoreSum
+    ? (config.avg * averageScore(rankedAuthors)) / maxAuthorScoreSum
+    : 0;
+  const finalScore =
+    normRawScore + normAuthorsRecallScore + normAuthorsAvgScore;
+  return { finalScore, normRawScore };
 };

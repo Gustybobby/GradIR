@@ -1,15 +1,27 @@
-import { getScoreSorted, sumScore } from "@/server/handlers/search/utils";
+import {
+  averageScore,
+  getScoreSorted,
+  maxScore,
+  sumScore,
+} from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
 import {
   Author,
-  AUTHOR_INDEX_NAME,
   AuthorIndex,
   AuthorRankedSearchResult,
   AuthorWithScore,
 } from "@/server/schema/author";
+import { AUTHOR_INDEX } from "@/server/schema/indexSetting";
 import { Paper, PaperWithScore } from "@/server/schema/paper";
 import { With } from "@/server/types/util";
+
+export interface AuthorRankConfig {
+  top_k: number;
+  raw: number;
+  recall: number;
+  avg: number;
+}
 
 /**
  * #### Rank authors
@@ -20,7 +32,7 @@ import { With } from "@/server/types/util";
 export const getRankedAuthors = async (
   papers: PaperWithScore[],
   authors: AuthorWithScore[],
-  weights: { raw: number; papers_recall: number; papers_top_k: number },
+  config: AuthorRankConfig,
 ): Promise<AuthorRankedSearchResult[]> => {
   const unionAuthors = await getAuthorsByIds(
     authors.map((author) => author.id),
@@ -29,8 +41,9 @@ export const getRankedAuthors = async (
   const papersRecord = new Map(papers.map((paper) => [paper.id, paper]));
   const authorsRecord = new Map(authors.map((author) => [author.id, author]));
 
-  const paperScoreSum = sumScore(papers) + 1;
-  const authorScoreSum = sumScore(authors) + 1;
+  const paperScoreSum = sumScore(papers);
+  const paperMaxScore = maxScore(papers);
+  const authorScoreSum = sumScore(authors);
 
   return getScoreSorted(
     unionAuthors.map((unionAuthor) => {
@@ -42,11 +55,15 @@ export const getRankedAuthors = async (
       };
       const rankedPapers = getScoreSorted(
         unionAuthor.papers.map((paper) => papersRecord.get(paper.id)!),
-      ).slice(0, weights.papers_top_k);
-      const normRawScore = (weights.raw * author.score) / authorScoreSum;
-      const normPapersRecallScore =
-        (weights.papers_recall * sumScore(rankedPapers)) / paperScoreSum;
-      const finalScore = normRawScore + normPapersRecallScore;
+      ).slice(0, config.top_k);
+      const { finalScore, normRawScore } = calculateAuthorScore(
+        config,
+        author,
+        rankedPapers,
+        authorScoreSum,
+        paperScoreSum,
+        paperMaxScore,
+      );
       return {
         ...author,
         papers: rankedPapers,
@@ -79,7 +96,7 @@ const getAuthorsByIds = async (
     },
   });
   const authorDocs = await elastic.mget<AuthorIndex>({
-    index: AUTHOR_INDEX_NAME,
+    index: AUTHOR_INDEX.index,
     ids: authorMetas.map((meta) => meta.id),
   });
   return authorMetas.map((meta) => ({
@@ -87,4 +104,25 @@ const getAuthorsByIds = async (
     ...unwrapMGetOrThrow(authorDocs.docs.find((doc) => doc._id === meta.id)!)
       ._source!,
   }));
+};
+
+const calculateAuthorScore = (
+  config: AuthorRankConfig,
+  author: AuthorWithScore,
+  rankedPapers: PaperWithScore[],
+  authorScoreSum: number,
+  paperScoreSum: number,
+  paperMaxScore: number,
+) => {
+  const normRawScore = authorScoreSum
+    ? (config.raw * author.score) / authorScoreSum
+    : 0;
+  const normPapersRecallScore = paperScoreSum
+    ? (config.recall * sumScore(rankedPapers)) / paperScoreSum
+    : 0;
+  const normPapersAvgScore = paperMaxScore
+    ? (config.avg * averageScore(rankedPapers)) / paperMaxScore
+    : 0;
+  const finalScore = normRawScore + normPapersRecallScore + normPapersAvgScore;
+  return { finalScore, normRawScore };
 };

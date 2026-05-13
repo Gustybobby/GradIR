@@ -3,8 +3,6 @@ import { prisma } from "@/server/lib/prisma";
 import { CompressedInstitution } from "@/server/schema/institution";
 import { SearchOptions } from "@/server/schema/search";
 
-const DEFAULT_SCORE = 1.5;
-
 export async function evaluateSearchNDCG(searchOptions: SearchOptions) {
   const { institutions } = await searchRankedInstitutions(searchOptions);
 
@@ -14,42 +12,49 @@ export async function evaluateSearchNDCG(searchOptions: SearchOptions) {
   const idcg = calculateIDCG(queryScores);
   const ndcg = dcg / idcg;
 
-  return { dcg, idcg, ndcg };
+  const dcg10 = calculateDCG(institutions, queryScores, 10);
+  const idcg10 = calculateIDCG(queryScores, 10);
+  const ndcg10 = dcg10 / idcg10;
+
+  return { dcg, idcg, ndcg, dcg10, idcg10, ndcg10 };
 }
 
 async function getInstitutionQueryScores(
   query: SearchOptions["query"],
 ): Promise<Map<string, number>> {
   const scores = await prisma.evaluation.groupBy({
-    where: { query },
+    where: { query: query.toLowerCase() },
     by: ["institution_id"],
     _avg: { score: true },
   });
   return new Map(
-    scores.map((score) => [
-      score.institution_id,
-      score._avg.score ?? DEFAULT_SCORE,
-    ]),
+    scores.map((score) => [score.institution_id, score._avg.score ?? 0]),
   );
 }
 
 function calculateDCG(
   institutions: CompressedInstitution[],
   queryScores: Map<string, number>,
+  limit?: number,
 ): number {
-  return institutions.reduce(
-    (acc, curr, idx) =>
-      acc +
-      calculateDCGElement(idx + 1, queryScores.get(curr.id) ?? DEFAULT_SCORE),
-    0,
-  );
+  return institutions
+    .slice(0, limit)
+    .reduce(
+      (acc, curr, idx) =>
+        acc + calculateDCGElement(idx + 1, queryScores.get(curr.id) ?? 0),
+      0,
+    );
 }
 
-function calculateIDCG(queryScores: Map<string, number>): number {
+function calculateIDCG(
+  queryScores: Map<string, number>,
+  limit?: number,
+): number {
   const sortedScores = queryScores
     .entries()
     .toArray()
-    .toSorted((a, b) => -a[1] + b[1]);
+    .toSorted((a, b) => -a[1] + b[1])
+    .slice(0, limit);
   return sortedScores.reduce(
     (acc, curr, idx) => acc + calculateDCGElement(idx + 1, curr[1]),
     0,

@@ -1,12 +1,14 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
-import {
-  PAPER_INDEX_NAME,
-  PaperIndex,
-  PaperWithScore,
-} from "@/server/schema/paper";
+import { PaperIndex, PaperWithScore } from "@/server/schema/paper";
 import { SearchOptions } from "@/server/schema/search";
-import { RRFRetrieverEntry } from "@elastic/elasticsearch/lib/api/types";
+import {
+  QueryDslQueryContainer,
+  SearchHighlight,
+  SearchRequest,
+} from "@elastic/elasticsearch/lib/api/types";
+
+const SIZE = 20;
 
 /**
  * ### Search paper index by query.
@@ -16,71 +18,79 @@ import { RRFRetrieverEntry } from "@elastic/elasticsearch/lib/api/types";
 export const searchPapers = async (
   options: SearchOptions,
 ): Promise<PaperWithScore[]> => {
-  const retrievers: RRFRetrieverEntry[] = [
-    {
-      standard: {
-        query: {
-          function_score: {
-            query: {
-              multi_match: {
-                query: options.query,
-                fields: ["title^2", "abstract"],
-              },
+  const matchQuery: QueryDslQueryContainer = {
+    function_score: {
+      query: {
+        multi_match: {
+          query: options.query,
+          fields: ["title^2", "abstract"],
+        },
+      },
+      functions: [
+        {
+          field_value_factor: {
+            field: "citations",
+            modifier: "ln1p",
+            missing: 0,
+          },
+        },
+        {
+          gauss: {
+            published_at: {
+              origin: "now",
+              scale: "7000d",
+              offset: "700d",
             },
-            functions: [
-              {
-                field_value_factor: {
-                  field: "citations",
-                  modifier: "ln1p",
-                  missing: 0,
-                },
-              },
-              {
-                gauss: {
-                  published_at: {
-                    origin: "now",
-                    scale: "7000d",
-                    offset: "700d",
-                  },
-                },
-              },
-            ],
           },
         },
-      },
+      ],
     },
-  ];
+  };
 
-  if (options.semantic) {
-    retrievers.push({
-      standard: {
-        query: {
-          semantic: {
-            field: "semantic_title",
-            query: options.query,
+  const semanticTitleQuery: QueryDslQueryContainer = {
+    semantic: {
+      field: "semantic_title",
+      query: options.query,
+    },
+  };
+
+  const semanticAbstractQuery: QueryDslQueryContainer = {
+    semantic: {
+      field: "semantic_abstract",
+      query: options.query,
+    },
+  };
+
+  const highlight: SearchHighlight = {
+    fields: {
+      abstract: { pre_tags: [""], post_tags: [""] },
+    },
+  };
+
+  const searchRequest: SearchRequest =
+    options.paperIndex === "paper-eng-sem"
+      ? {
+          index: options.paperIndex,
+          retriever: {
+            rrf: {
+              retrievers: [
+                { standard: { query: matchQuery } },
+                { standard: { query: semanticTitleQuery } },
+                { standard: { query: semanticAbstractQuery } },
+              ],
+            },
           },
-        },
-      },
-    });
-  }
+          highlight,
+          size: SIZE,
+        }
+      : {
+          index: options.paperIndex,
+          query: matchQuery,
+          highlight,
+          size: SIZE,
+        };
 
-  const result = await elastic
-    .search<PaperIndex>({
-      index: PAPER_INDEX_NAME,
-      retriever: { rrf: { retrievers } },
-      highlight: {
-        fields: {
-          abstract: { pre_tags: [""], post_tags: [""] },
-        },
-      },
-    })
-    .catch((error) => {
-      const errorInfo = error.meta?.body?.error;
-      if (errorInfo) {
-        console.error(JSON.stringify(errorInfo));
-      }
-      throw error;
-    });
+  const result = await elastic.search<PaperIndex>(searchRequest);
   const docs = result.hits.hits.map((hit) => ({
     ...hit._source!,
     highlight: hit.highlight ?? {},

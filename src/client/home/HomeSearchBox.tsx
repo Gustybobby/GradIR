@@ -19,7 +19,8 @@ export function HomeSearchBox() {
           return;
         }
         setIsLoading(true);
-        router.push(`/search?query=${encodeURIComponent(query.toString())}`);
+        const searchParams = new URLSearchParams({ query: query.toString() });
+        router.push(`/search?${searchParams.toString()}`);
       }}
     >
       <SearchInput

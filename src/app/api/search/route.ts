@@ -7,9 +7,9 @@ export async function GET(req: NextRequest) {
   return handle(async () => {
     const searchParams = req.nextUrl.searchParams;
     const options = SearchOptions.parse({
+      paperIndex: searchParams.get("paperIndex"),
       query: searchParams.get("query"),
-      semantic: searchParams.get("semantic") ?? undefined,
-    });
+    } satisfies Record<keyof SearchOptions, unknown>);
     const result = await searchRankedInstitutions(options);
     return NextResponse.json(result, { status: 200 });
   });

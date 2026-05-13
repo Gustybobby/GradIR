@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
     await authorizeAPIKey();
     const searchParams = req.nextUrl.searchParams;
     const options = SearchOptions.parse({
+      paperIndex: searchParams.get("paperIndex"),
       query: searchParams.get("query"),
-      semantic: searchParams.get("semantic") ?? undefined,
-    });
+    } satisfies Record<keyof SearchOptions, unknown>);
     const result = await evaluateSearchNDCG(options);
     return NextResponse.json(result, { status: 200 });
   });

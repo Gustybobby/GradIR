@@ -1,18 +1,5 @@
 import { Highlight, Score, With } from "@/server/types/util";
-import { MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
-
-export const PAPER_INDEX_NAME = "paper";
-
-export const PAPER_INDEX_MAPPINGS = {
-  properties: {
-    // semantic_title: { type: "semantic_text" },
-    title: { type: "text" },
-    abstract: { type: "text" },
-    citations: { type: "integer" },
-    published_at: { type: "date" },
-  },
-} as const satisfies MappingTypeMapping;
 
 export const PaperDB = z.object({
   id: z.string(),
@@ -22,15 +9,12 @@ export const PaperDB = z.object({
 });
 export type PaperDB = z.infer<typeof PaperDB>;
 
-export const PaperIndex = z
-  .object({
-    title: z.string(),
-    published_at: z.coerce.date(),
-    citations: z.number().int(),
-  })
-  .extend({
-    abstract: z.string(),
-  });
+export const PaperIndex = z.object({
+  title: z.string(),
+  published_at: z.coerce.date(),
+  citations: z.number().int(),
+  abstract: z.string(),
+});
 export type PaperIndex = z.infer<typeof PaperIndex>;
 
 export const Paper = PaperDB.extend(PaperIndex.shape);

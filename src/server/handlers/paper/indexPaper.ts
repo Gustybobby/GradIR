@@ -1,13 +1,12 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
-import {
-  Paper,
-  PAPER_INDEX_NAME,
-  PaperUpsert,
-  PaperIndex,
-} from "@/server/schema/paper";
+import { PaperIndexName } from "@/server/schema/indexSetting";
+import { Paper, PaperUpsert, PaperIndex } from "@/server/schema/paper";
 
-export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
+export const indexPaper = async (
+  data: PaperUpsert,
+  index: PaperIndexName,
+): Promise<Paper> => {
   const document = PaperIndex.parse(data);
   const paper = await prisma.paper.upsert({
     where: { id: data.id },
@@ -24,12 +23,13 @@ export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
       institutions: { set: data.institution_ids.map((id) => ({ id })) },
     },
   });
-  await elastic.index({ index: PAPER_INDEX_NAME, id: paper.id, document });
+  await elastic.index({ index, id: paper.id, document });
   return { ...paper, ...document };
 };
 
 export const indexManyPapers = async (
   data: PaperUpsert[],
+  index: PaperIndexName,
 ): Promise<Paper[]> => {
   const papers = await prisma.paper
     .createManyAndReturn({
@@ -48,15 +48,13 @@ export const indexManyPapers = async (
     );
   const operations = papers.flatMap((paper) => {
     const document = PaperIndex.parse(paper);
-    return [{ index: { _index: PAPER_INDEX_NAME, _id: paper.id } }, document];
+    return [{ index: { _index: index, _id: paper.id } }, document];
   });
-  await elastic
-    .bulk({ index: PAPER_INDEX_NAME, operations })
-    .catch(async (error) => {
-      await prisma.paper.deleteMany({
-        where: { id: { in: papers.map((paper) => paper.id) } },
-      });
-      throw error;
+  await elastic.bulk({ index, operations }).catch(async (error) => {
+    await prisma.paper.deleteMany({
+      where: { id: { in: papers.map((paper) => paper.id) } },
     });
+    throw error;
+  });
   return papers;
 };

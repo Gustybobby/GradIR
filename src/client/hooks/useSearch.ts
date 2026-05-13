@@ -16,7 +16,7 @@ export function useSearch() {
   const [isFetching, setIsFetching] = React.useState<boolean>(true);
 
   const search = React.useCallback(
-    async (options: SearchOptions) => {
+    async (options: Pick<SearchOptions, "query">) => {
       const params = new URLSearchParams(searchParams);
       params.set("query", options.query);
       window.history.pushState({}, "", `${pathname}?${params.toString()}`);
@@ -28,7 +28,10 @@ export function useSearch() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(paramsQuery);
     setIsFetching(true);
-    callSearchAPI({ query: paramsQuery })
+    callSearchAPI({
+      paperIndex: "paper-eng",
+      query: paramsQuery,
+    })
       .then(setResult)
       .finally(() => setIsFetching(false));
   }, [paramsQuery]);

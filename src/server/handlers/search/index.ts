@@ -3,20 +3,28 @@ import { SearchOptions } from "@/server/schema/search";
 import { searchPapers } from "@/server/handlers/search/searchPapers";
 import { searchAuthors } from "@/server/handlers/search/searchAuthors";
 import { searchInstitutions } from "@/server/handlers/search/searchInstitutions";
-import { getRankedAuthors } from "@/server/handlers/search/rankAuthors";
-import { getRankedInstitutions } from "@/server/handlers/search/rankInstitutions";
+import {
+  AuthorRankConfig,
+  getRankedAuthors,
+} from "@/server/handlers/search/rankAuthors";
+import {
+  getRankedInstitutions,
+  InstitutionRankConfig,
+} from "@/server/handlers/search/rankInstitutions";
 import { compressSearchResults } from "@/server/handlers/search/compress";
 
-const authorRankConfig = {
-  raw: 0.3,
-  papers_recall: 0.7,
-  papers_top_k: 3,
+const authorRankConfig: AuthorRankConfig = {
+  top_k: 3,
+  raw: 0.5,
+  recall: 0.4,
+  avg: 0.1,
 };
 
-const institutionRankConfig = {
-  raw: 0.3,
-  authors_recall: 0.7,
-  authors_top_k: 3,
+const institutionRankConfig: InstitutionRankConfig = {
+  top_k: 3,
+  raw: 0.5,
+  recall: 0.4,
+  avg: 0.1,
 };
 
 export const searchRankedInstitutions = async (

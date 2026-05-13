@@ -1,62 +1,37 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
-import {
-  AUTHOR_INDEX_NAME,
-  AuthorIndex,
-  AuthorWithScore,
-} from "@/server/schema/author";
+import { AuthorIndex, AuthorWithScore } from "@/server/schema/author";
+import { AUTHOR_INDEX } from "@/server/schema/indexSetting";
 import { SearchOptions } from "@/server/schema/search";
-import { RRFRetrieverEntry } from "@elastic/elasticsearch/lib/api/types";
 
 /**
  * ### Search author index by query.
- * - Hybrid search (multi-match + semantic)
+ * - Multi-match search
  */
 export const searchAuthors = async (
   options: SearchOptions,
 ): Promise<AuthorWithScore[]> => {
-  const retrievers: RRFRetrieverEntry[] = [
-    {
-      standard: {
+  const result = await elastic.search<AuthorIndex>({
+    index: AUTHOR_INDEX.index,
+    query: {
+      function_score: {
         query: {
-          function_score: {
-            query: {
-              multi_match: {
-                query: options.query,
-                fields: ["full_name", "display_name", "orcid", "summary^2"],
-              },
-            },
-            functions: [
-              {
-                field_value_factor: {
-                  field: "h_index",
-                  modifier: "sqrt",
-                  missing: 0,
-                },
-              },
-            ],
+          multi_match: {
+            query: options.query,
+            fields: ["full_name", "display_name", "orcid^3"],
           },
         },
+        functions: [
+          {
+            field_value_factor: {
+              field: "h_index",
+              modifier: "sqrt",
+              missing: 0,
+            },
+          },
+        ],
       },
     },
-  ];
-
-  if (options.semantic) {
-    retrievers.push({
-      standard: {
-        query: {
-          semantic: {
-            field: "semantic_summary",
-            query: options.query,
-          },
-        },
-      },
-    });
-  }
-
-  const result = await elastic.search<AuthorIndex>({
-    index: AUTHOR_INDEX_NAME,
-    retriever: { rrf: { retrievers } },
   });
   const docs = result.hits.hits.map((hit) => ({
     ...hit._source!,

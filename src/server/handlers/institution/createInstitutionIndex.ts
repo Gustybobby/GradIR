@@ -1,12 +1,6 @@
 import { elastic } from "@/server/lib/elasticsearch";
-import {
-  INSTITUTION_INDEX_MAPPINGS,
-  INSTITUTION_INDEX_NAME,
-} from "@/server/schema/institution";
+import { INSTITUTION_INDEX } from "@/server/schema/indexSetting";
 
 export const createInstitutionIndex = () => {
-  return elastic.indices.create({
-    index: INSTITUTION_INDEX_NAME,
-    mappings: INSTITUTION_INDEX_MAPPINGS,
-  });
+  return elastic.indices.create(INSTITUTION_INDEX);
 };

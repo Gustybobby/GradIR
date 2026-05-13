@@ -1,7 +1,7 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
+import { INSTITUTION_INDEX } from "@/server/schema/indexSetting";
 import {
-  INSTITUTION_INDEX_NAME,
   InstitutionIndex,
   InstitutionWithScore,
 } from "@/server/schema/institution";
@@ -14,11 +14,11 @@ export const searchInstitutions = async (
   options: SearchOptions,
 ): Promise<InstitutionWithScore[]> => {
   const result = await elastic.search<InstitutionIndex>({
-    index: INSTITUTION_INDEX_NAME,
+    index: INSTITUTION_INDEX.index,
     query: {
       multi_match: {
         query: options.query,
-        fields: ["title^3", "location", "country", "website", "type^2"],
+        fields: ["title", "location", "country", "website", "type"],
       },
     },
   });

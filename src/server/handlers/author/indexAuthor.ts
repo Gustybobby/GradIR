@@ -1,11 +1,7 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
-import {
-  Author,
-  AUTHOR_INDEX_NAME,
-  AuthorIndex,
-  AuthorUpsert,
-} from "@/server/schema/author";
+import { Author, AuthorIndex, AuthorUpsert } from "@/server/schema/author";
+import { AUTHOR_INDEX } from "@/server/schema/indexSetting";
 
 export const indexAuthor = async (data: AuthorUpsert): Promise<Author> => {
   const document = AuthorIndex.parse(data);
@@ -20,7 +16,7 @@ export const indexAuthor = async (data: AuthorUpsert): Promise<Author> => {
       institution_id: data.institution_id,
     },
   });
-  await elastic.index({ index: AUTHOR_INDEX_NAME, id: author.id, document });
+  await elastic.index({ index: AUTHOR_INDEX.index, id: author.id, document });
   return { ...author, ...document };
 };
 
@@ -42,10 +38,13 @@ export const indexManyAuthors = async (
     );
   const operations = authors.flatMap((author) => {
     const document = AuthorIndex.parse(author);
-    return [{ index: { _index: AUTHOR_INDEX_NAME, _id: author.id } }, document];
+    return [
+      { index: { _index: AUTHOR_INDEX.index, _id: author.id } },
+      document,
+    ];
   });
   await elastic
-    .bulk({ index: AUTHOR_INDEX_NAME, operations })
+    .bulk({ index: AUTHOR_INDEX.index, operations })
     .catch(async (error) => {
       await prisma.author.deleteMany({
         where: { id: { in: authors.map((author) => author.id) } },

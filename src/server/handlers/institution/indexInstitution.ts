@@ -1,8 +1,8 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { prisma } from "@/server/lib/prisma";
+import { INSTITUTION_INDEX } from "@/server/schema/indexSetting";
 import {
   Institution,
-  INSTITUTION_INDEX_NAME,
   InstitutionIndex,
   InstitutionUpsert,
 } from "@/server/schema/institution";
@@ -27,7 +27,7 @@ export const indexInstitution = async (
     },
   });
   await elastic.index({
-    index: INSTITUTION_INDEX_NAME,
+    index: INSTITUTION_INDEX.index,
     id: institution.id,
     document,
   });
@@ -55,12 +55,12 @@ export const indexManyInstitutions = async (
   const operations = institutions.flatMap((institution) => {
     const document = InstitutionIndex.parse(institution);
     return [
-      { index: { _index: INSTITUTION_INDEX_NAME, _id: institution.id } },
+      { index: { _index: INSTITUTION_INDEX.index, _id: institution.id } },
       document,
     ];
   });
   await elastic
-    .bulk({ index: INSTITUTION_INDEX_NAME, operations })
+    .bulk({ index: INSTITUTION_INDEX.index, operations })
     .catch(async (error) => {
       await prisma.institution.deleteMany({
         where: {

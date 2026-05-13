@@ -4,5 +4,7 @@ import { Evaluation, EvaluationCreate } from "@/server/schema/evaluation";
 export async function createEvaluation(
   data: EvaluationCreate,
 ): Promise<Evaluation> {
-  return prisma.evaluation.create({ data });
+  return prisma.evaluation.create({
+    data: { ...data, query: data.query.toLowerCase() },
+  });
 }
