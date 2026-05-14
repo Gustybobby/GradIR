@@ -6,3 +6,8 @@ export const SearchOptions = z.object({
   query: z.string(),
 });
 export type SearchOptions = z.infer<typeof SearchOptions>;
+
+export interface SearchSuggestion {
+  text: string;
+  score: number;
+}

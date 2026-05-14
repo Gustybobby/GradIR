@@ -1,4 +1,5 @@
 import { elastic } from "@/server/lib/elasticsearch";
+import { getEmbeddings } from "@/server/lib/embedding";
 import { prisma } from "@/server/lib/prisma";
 import { PaperIndex, PaperWithScore } from "@/server/schema/paper";
 import { SearchOptions } from "@/server/schema/search";
@@ -47,48 +48,45 @@ export const searchPapers = async (
     },
   };
 
-  const semanticTitleQuery: QueryDslQueryContainer = {
-    semantic: {
-      field: "semantic_title",
-      query: options.query,
-    },
-  };
-
-  const semanticAbstractQuery: QueryDslQueryContainer = {
-    semantic: {
-      field: "semantic_abstract",
-      query: options.query,
-    },
-  };
-
   const highlight: SearchHighlight = {
-    fields: {
-      abstract: { pre_tags: [""], post_tags: [""] },
-    },
+    fields: { abstract: { pre_tags: [""], post_tags: [""] } },
   };
 
-  const searchRequest: SearchRequest =
-    options.paperIndex === "paper-eng-sem"
-      ? {
-          index: options.paperIndex,
-          retriever: {
-            rrf: {
-              retrievers: [
-                { standard: { query: matchQuery } },
-                { standard: { query: semanticTitleQuery } },
-                { standard: { query: semanticAbstractQuery } },
-              ],
-            },
+  const isSemantic = options.paperIndex === "paper-eng-sem-bbq";
+
+  const query_vector = isSemantic
+    ? await getEmbeddings([options.query]).then((embeddings) => embeddings[0])
+    : undefined;
+
+  const searchRequest: SearchRequest = isSemantic
+    ? {
+        index: options.paperIndex,
+        retriever: {
+          rrf: {
+            retrievers: [
+              { standard: { query: matchQuery } },
+              {
+                standard: {
+                  query: {
+                    knn: { k: SIZE, field: "title_vector", query_vector },
+                  },
+                },
+              },
+              {
+                standard: {
+                  query: {
+                    knn: { k: SIZE, field: "abstract_vector", query_vector },
+                  },
+                },
+              },
+            ],
+            rank_window_size: SIZE,
           },
-          highlight,
-          size: SIZE,
-        }
-      : {
-          index: options.paperIndex,
-          query: matchQuery,
-          highlight,
-          size: SIZE,
-        };
+        },
+        highlight,
+        size: SIZE,
+      }
+    : { index: options.paperIndex, query: matchQuery, highlight, size: SIZE };
 
   const result = await elastic.search<PaperIndex>(searchRequest);
   const docs = result.hits.hits.map((hit) => ({

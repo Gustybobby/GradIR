@@ -1,10 +1,17 @@
 import { search as callSearchAPI } from "@/client/api/search";
+import { suggest } from "@/client/api/suggest";
 import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
-import { SearchOptions } from "@/server/schema/search";
+import { SearchOptions, SearchSuggestion } from "@/server/schema/search";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
-export function useSearch() {
+const PAPER_INDEX = "paper-eng";
+
+interface Props {
+  isSuggestionEnabled?: boolean;
+}
+
+export function useSearch({ isSuggestionEnabled }: Props) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
@@ -13,6 +20,7 @@ export function useSearch() {
 
   const [result, setResult] =
     React.useState<CompressedInstitutionRankedSearchResult>();
+  const [suggestions, setSuggestions] = React.useState<SearchSuggestion[]>();
   const [isFetching, setIsFetching] = React.useState<boolean>(true);
 
   const search = React.useCallback(
@@ -29,12 +37,31 @@ export function useSearch() {
     setQuery(paramsQuery);
     setIsFetching(true);
     callSearchAPI({
-      paperIndex: "paper-eng",
+      paperIndex: PAPER_INDEX,
       query: paramsQuery,
     })
       .then(setResult)
       .finally(() => setIsFetching(false));
+    suggest({ paperIndex: PAPER_INDEX, query: paramsQuery }).then(
+      setSuggestions,
+    );
   }, [paramsQuery]);
 
-  return { query, result, isFetching, setQuery, search };
+  React.useEffect(() => {
+    if (!isSuggestionEnabled || query === paramsQuery) {
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSuggestions((suggestions) =>
+      suggestions
+        ? [{ text: query, score: 1 }, ...suggestions?.slice(1)]
+        : undefined,
+    );
+    const timeout = setTimeout(() => {
+      suggest({ paperIndex: PAPER_INDEX, query }).then(setSuggestions);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [isSuggestionEnabled, query, paramsQuery]);
+
+  return { query, result, suggestions, isFetching, setQuery, search };
 }

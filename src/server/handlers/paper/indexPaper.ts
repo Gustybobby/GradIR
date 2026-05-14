@@ -1,4 +1,5 @@
 import { elastic } from "@/server/lib/elasticsearch";
+import { getEmbeddings } from "@/server/lib/embedding";
 import { prisma } from "@/server/lib/prisma";
 import { PaperIndexName } from "@/server/schema/indexSetting";
 import { Paper, PaperUpsert, PaperIndex } from "@/server/schema/paper";
@@ -23,7 +24,19 @@ export const indexPaper = async (
       institutions: { set: data.institution_ids.map((id) => ({ id })) },
     },
   });
-  await elastic.index({ index, id: paper.id, document });
+  if (index === "paper-eng-sem-bbq") {
+    const [title_vector, abstract_vector] = await getEmbeddings([
+      document.title || "-",
+      document.abstract || "-",
+    ]);
+    await elastic.index({
+      index,
+      id: paper.id,
+      document: { ...document, title_vector, abstract_vector },
+    });
+  } else {
+    await elastic.index({ index, id: paper.id, document });
+  }
   return { ...paper, ...document };
 };
 
@@ -46,15 +59,28 @@ export const indexManyPapers = async (
         ...paper,
       })),
     );
-  const operations = papers.flatMap((paper) => {
-    const document = PaperIndex.parse(paper);
-    return [{ index: { _index: index, _id: paper.id } }, document];
-  });
-  await elastic.bulk({ index, operations }).catch(async (error) => {
+  const isSemanticIndex = index === "paper-eng-sem-bbq";
+  try {
+    const titleEmbeddings = isSemanticIndex
+      ? await getEmbeddings(papers.map((paper) => paper.title || "-"))
+      : [];
+    const abstractEmbeddings = isSemanticIndex
+      ? await getEmbeddings(papers.map((paper) => paper.abstract || "-"))
+      : [];
+    const operations = papers.flatMap((paper, idx) => {
+      const document = {
+        ...PaperIndex.parse(paper),
+        title_vector: titleEmbeddings[idx],
+        abstract_vector: abstractEmbeddings[idx],
+      };
+      return [{ index: { _index: index, _id: paper.id } }, document];
+    });
+    await elastic.bulk({ index, operations });
+  } catch (error) {
     await prisma.paper.deleteMany({
       where: { id: { in: papers.map((paper) => paper.id) } },
     });
     throw error;
-  });
+  }
   return papers;
 };

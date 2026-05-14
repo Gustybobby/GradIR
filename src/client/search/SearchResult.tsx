@@ -23,9 +23,15 @@ interface Props {
   rank: number;
   institution: CompressedInstitution;
   papers: CompressedInstitutionRankedSearchResult["papers"];
+  isEvaluationEnabled?: boolean;
 }
 
-export function SearchResult({ rank, institution, papers }: Props) {
+export function SearchResult({
+  rank,
+  institution,
+  papers,
+  isEvaluationEnabled,
+}: Props) {
   const institutionPapers = React.useMemo(() => {
     const paperIdSet = new Set(
       institution.authors.flatMap((author) => author.paper_ids),
@@ -46,7 +52,9 @@ export function SearchResult({ rank, institution, papers }: Props) {
             {institution.location} | {institution.country}
           </SecondaryHeading>
         </div>
-        <EvaluationSection institution={institution} />
+        {isEvaluationEnabled ? (
+          <EvaluationSection institution={institution} />
+        ) : null}
       </header>
       <Separator />
       <div className="grid gap-1 p-4">

@@ -2,11 +2,9 @@
 
 import { Spinner } from "@/client/ui/Spinner";
 import { SearchIcon } from "lucide-react";
+import React from "react";
 
-interface Props {
-  id?: string;
-  name?: string;
-  value?: string;
+interface Props extends React.ComponentProps<"input"> {
   isLoading?: boolean;
   onValueChange?: (value: string) => void;
 }

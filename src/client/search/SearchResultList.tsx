@@ -3,6 +3,7 @@ import {
   SearchResultSkeleton,
 } from "@/client/search/SearchResult";
 import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
+import { useSearchParams } from "next/navigation";
 import React from "react";
 
 interface Props {
@@ -10,6 +11,11 @@ interface Props {
 }
 
 function SearchResultListComponent({ result }: Props) {
+  const searchParams = useSearchParams();
+
+  const isEvaluationEnabled =
+    searchParams.get("evaluation")?.toLowerCase() === "true";
+
   return (
     <div className="grid grid-cols-7 mb-8">
       <main className="col-span-full md:col-start-2 md:col-span-5">
@@ -23,6 +29,7 @@ function SearchResultListComponent({ result }: Props) {
                     rank={idx + 1}
                     institution={institution}
                     papers={result.papers}
+                    isEvaluationEnabled={isEvaluationEnabled}
                   />
                 ))
               ) : (

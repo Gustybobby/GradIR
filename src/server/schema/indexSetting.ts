@@ -1,3 +1,4 @@
+import { EMBED_DIMENSIONS } from "@/server/lib/embedding";
 import { IndicesCreateRequest } from "@elastic/elasticsearch/lib/api/types";
 import z from "zod";
 
@@ -68,27 +69,33 @@ export const PAPER_INDEX_RES = {
 } as const satisfies IndicesCreateRequest;
 
 export const PAPER_INDEX_ENG_SEM = {
-  index: "paper-eng-sem",
+  index: "paper-eng-sem-bbq",
   mappings: {
     properties: {
-      semantic_title: {
-        type: "semantic_text",
-        inference_id: process.env["EMBEDDING_INFERENCE_ID"],
+      title_vector: {
+        type: "dense_vector",
+        dims: EMBED_DIMENSIONS,
+        similarity: "cosine",
+        index: true,
+        index_options: {
+          type: "bbq_hnsw",
+          m: 64,
+          ef_construction: 400,
+        },
       },
-      title: {
-        type: "text",
-        analyzer: "english",
-        copy_to: "semantic_title",
+      title: { type: "text", analyzer: "english" },
+      abstract_vector: {
+        type: "dense_vector",
+        dims: EMBED_DIMENSIONS,
+        similarity: "cosine",
+        index: true,
+        index_options: {
+          type: "bbq_hnsw",
+          m: 64,
+          ef_construction: 400,
+        },
       },
-      semantic_abstract: {
-        type: "semantic_text",
-        inference_id: process.env["EMBEDDING_INFERENCE_ID"],
-      },
-      abstract: {
-        type: "text",
-        analyzer: "english",
-        copy_to: "semantic_abstract",
-      },
+      abstract: { type: "text", analyzer: "english" },
       citations: { type: "integer" },
       published_at: { type: "date" },
     },

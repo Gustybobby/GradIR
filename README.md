@@ -23,14 +23,14 @@ This project requires **PostgreSQL** and **Elastic Cloud**.
    ```env
    ELASTIC_NODE=<your-elastic-endpoint>
    ELASTIC_API_KEY=<your-elastic-api-key>
-   EMBEDDING_INFERENCE_ID=<your-embedding-model-id>
+   OPENAI_API_KEY=<your-openai-api-key>
    DATABASE_URL=<your-postgres-connection-string>
    API_KEY=<your-internal-api-key>
    ```
 
    - `ELASTIC_NODE`: Your Elastic Cloud endpoint
    - `ELASTIC_API_KEY`: API key for Elasticsearch access
-   - `EMBEDDING_INFERENCE_ID`: Embedding Model Inference ID (If you want to use semantic search)
+   - `OPENAI_API_KEY`: This project uses OpenAI text embedding model.
    - `DATABASE_URL`: PostgreSQL connection string
    - `API_KEY`: Used for securing data management APIs
 
