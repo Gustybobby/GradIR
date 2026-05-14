@@ -19,7 +19,7 @@ export function SearchHeader({
   onSearch,
   onClickSuggestion,
 }: Props) {
-  const [focus, setFocus] = React.useState<boolean>(true);
+  const [focus, setFocus] = React.useState<boolean>(false);
   return (
     <header className="px-2 py-4 mb-8 bg-zinc-900 shadow-md border-b border-border grid grid-cols-7">
       <div className="hidden md:flex items-center justify-center col-span-1">
