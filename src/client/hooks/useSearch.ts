@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
 const PAPER_INDEX = "paper-eng";
+const SUGGEST_INDEX = "paper-def";
 
 interface Props {
   isSuggestionEnabled?: boolean;
@@ -42,7 +43,7 @@ export function useSearch({ isSuggestionEnabled }: Props) {
     })
       .then(setResult)
       .finally(() => setIsFetching(false));
-    suggest({ paperIndex: PAPER_INDEX, query: paramsQuery }).then(
+    suggest({ paperIndex: SUGGEST_INDEX, query: paramsQuery }).then(
       setSuggestions,
     );
   }, [paramsQuery]);
@@ -58,7 +59,7 @@ export function useSearch({ isSuggestionEnabled }: Props) {
         : undefined,
     );
     const timeout = setTimeout(() => {
-      suggest({ paperIndex: PAPER_INDEX, query }).then(setSuggestions);
+      suggest({ paperIndex: SUGGEST_INDEX, query }).then(setSuggestions);
     }, 500);
     return () => clearTimeout(timeout);
   }, [isSuggestionEnabled, query, paramsQuery]);

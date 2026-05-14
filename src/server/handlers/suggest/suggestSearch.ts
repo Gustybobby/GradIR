@@ -16,12 +16,14 @@ export const suggestSearch = async (
         term: {
           field: "title",
           analyzer: "standard",
+          suggest_mode: "popular",
         },
       },
       abstract: {
         term: {
           field: "abstract",
           analyzer: "standard",
+          suggest_mode: "popular",
         },
       },
     },

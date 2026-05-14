@@ -1,7 +1,10 @@
 import { elastic } from "@/server/lib/elasticsearch";
 import { getEmbeddings } from "@/server/lib/embedding";
 import { prisma } from "@/server/lib/prisma";
-import { PaperIndexName } from "@/server/schema/indexSetting";
+import {
+  PAPER_INDEX_DEFAULT,
+  PaperIndexName,
+} from "@/server/schema/indexSetting";
 import { Paper, PaperUpsert, PaperIndex } from "@/server/schema/paper";
 
 export const indexPaper = async (
@@ -36,6 +39,13 @@ export const indexPaper = async (
     });
   } else {
     await elastic.index({ index, id: paper.id, document });
+  }
+  if (index !== "paper-def") {
+    await elastic.index({
+      index: PAPER_INDEX_DEFAULT.index,
+      id: paper.id,
+      document,
+    });
   }
   return { ...paper, ...document };
 };
@@ -81,6 +91,16 @@ export const indexManyPapers = async (
       where: { id: { in: papers.map((paper) => paper.id) } },
     });
     throw error;
+  }
+  if (index !== "paper-def") {
+    const operations = papers.flatMap((paper) => {
+      const document = { ...PaperIndex.parse(paper) };
+      return [
+        { index: { _index: PAPER_INDEX_DEFAULT.index, _id: paper.id } },
+        document,
+      ];
+    });
+    await elastic.bulk({ index: PAPER_INDEX_DEFAULT.index, operations });
   }
   return papers;
 };
