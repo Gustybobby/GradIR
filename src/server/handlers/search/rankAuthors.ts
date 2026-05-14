@@ -1,7 +1,6 @@
 import {
   averageScore,
   getScoreSorted,
-  maxScore,
   sumScore,
 } from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
@@ -26,7 +25,7 @@ export interface AuthorRankConfig {
 /**
  * #### Rank authors
  * - Rank authors by linear combination of normalized author profile and papers score.
- * - `aut_score` = Norm(`aut_raw_score`) + Norm(top_k_sum(`aut_paper_score`))
+ * - `aut_score` = Norm(`aut_raw_score`) + Norm(top_k_sum(`aut_paper_score`)) + Norm(avg(`aut_paper_score`))
  * - 2nd term is author's papers score-weighted recall.
  */
 export const getRankedAuthors = async (
@@ -40,10 +39,6 @@ export const getRankedAuthors = async (
   );
   const papersRecord = new Map(papers.map((paper) => [paper.id, paper]));
   const authorsRecord = new Map(authors.map((author) => [author.id, author]));
-
-  const paperScoreSum = sumScore(papers);
-  const paperMaxScore = maxScore(papers);
-  const authorScoreSum = sumScore(authors);
 
   return getScoreSorted(
     unionAuthors.map((unionAuthor) => {
@@ -60,9 +55,6 @@ export const getRankedAuthors = async (
         config,
         author,
         rankedPapers,
-        authorScoreSum,
-        paperScoreSum,
-        paperMaxScore,
       );
       return {
         ...author,
@@ -110,19 +102,10 @@ const calculateAuthorScore = (
   config: AuthorRankConfig,
   author: AuthorWithScore,
   rankedPapers: PaperWithScore[],
-  authorScoreSum: number,
-  paperScoreSum: number,
-  paperMaxScore: number,
 ) => {
-  const normRawScore = authorScoreSum
-    ? (config.raw * author.score) / authorScoreSum
-    : 0;
-  const normPapersRecallScore = paperScoreSum
-    ? (config.recall * sumScore(rankedPapers)) / paperScoreSum
-    : 0;
-  const normPapersAvgScore = paperMaxScore
-    ? (config.avg * averageScore(rankedPapers)) / paperMaxScore
-    : 0;
+  const normRawScore = config.raw * author.score;
+  const normPapersRecallScore = config.recall * sumScore(rankedPapers);
+  const normPapersAvgScore = config.avg * averageScore(rankedPapers);
   const finalScore = normRawScore + normPapersRecallScore + normPapersAvgScore;
   return { finalScore, normRawScore };
 };

@@ -1,18 +1,22 @@
 import { search as callSearchAPI } from "@/client/api/search";
-import { suggest } from "@/client/api/suggest";
+import { suggest as callSuggestAPI } from "@/client/api/suggest";
+import { PaperIndexName } from "@/server/schema/indexSetting";
 import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
 import { SearchOptions, SearchSuggestion } from "@/server/schema/search";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
-const PAPER_INDEX = "paper-eng";
-const SUGGEST_INDEX = "paper-def";
-
-interface Props {
+export interface UseSearchProps {
+  queryIndex: PaperIndexName;
+  suggestIndex: PaperIndexName;
   isSuggestionEnabled?: boolean;
 }
 
-export function useSearch({ isSuggestionEnabled }: Props) {
+export function useSearch({
+  queryIndex,
+  suggestIndex,
+  isSuggestionEnabled,
+}: UseSearchProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
@@ -33,20 +37,21 @@ export function useSearch({ isSuggestionEnabled }: Props) {
     [pathname, searchParams],
   );
 
+  const suggest = React.useCallback(
+    (query: string) =>
+      callSuggestAPI({ paperIndex: suggestIndex, query }).then(setSuggestions),
+    [suggestIndex],
+  );
+
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(paramsQuery);
     setIsFetching(true);
-    callSearchAPI({
-      paperIndex: PAPER_INDEX,
-      query: paramsQuery,
-    })
+    callSearchAPI({ paperIndex: queryIndex, query: paramsQuery })
       .then(setResult)
       .finally(() => setIsFetching(false));
-    suggest({ paperIndex: SUGGEST_INDEX, query: paramsQuery }).then(
-      setSuggestions,
-    );
-  }, [paramsQuery]);
+    suggest(paramsQuery);
+  }, [queryIndex, paramsQuery, suggest]);
 
   React.useEffect(() => {
     if (!isSuggestionEnabled || query === paramsQuery) {
@@ -58,11 +63,9 @@ export function useSearch({ isSuggestionEnabled }: Props) {
         ? [{ text: query, score: 1 }, ...suggestions?.slice(1)]
         : undefined,
     );
-    const timeout = setTimeout(() => {
-      suggest({ paperIndex: SUGGEST_INDEX, query }).then(setSuggestions);
-    }, 500);
+    const timeout = setTimeout(() => suggest(query), 500);
     return () => clearTimeout(timeout);
-  }, [isSuggestionEnabled, query, paramsQuery]);
+  }, [queryIndex, isSuggestionEnabled, query, paramsQuery, suggest]);
 
   return { query, result, suggestions, isFetching, setQuery, search };
 }

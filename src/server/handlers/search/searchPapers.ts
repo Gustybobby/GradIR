@@ -62,20 +62,32 @@ export const searchPapers = async (
     ? {
         index: options.paperIndex,
         retriever: {
-          rrf: {
+          linear: {
             retrievers: [
-              { standard: { query: matchQuery } },
               {
-                standard: {
-                  query: {
-                    knn: { k: SIZE, field: "title_vector", query_vector },
+                weight: options.paperRetrieverWeights?.match ?? 0.5,
+                normalizer: "minmax",
+                retriever: { standard: { query: matchQuery } },
+              },
+              {
+                weight: options.paperRetrieverWeights?.title ?? 0.3,
+                normalizer: "minmax",
+                retriever: {
+                  standard: {
+                    query: {
+                      knn: { k: SIZE, field: "title_vector", query_vector },
+                    },
                   },
                 },
               },
               {
-                standard: {
-                  query: {
-                    knn: { k: SIZE, field: "abstract_vector", query_vector },
+                weight: options.paperRetrieverWeights?.abstract ?? 0.2,
+                normalizer: "minmax",
+                retriever: {
+                  standard: {
+                    query: {
+                      knn: { k: SIZE, field: "abstract_vector", query_vector },
+                    },
                   },
                 },
               },

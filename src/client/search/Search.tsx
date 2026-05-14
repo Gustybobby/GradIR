@@ -6,7 +6,11 @@ import { SearchResultList } from "@/client/search/SearchResultList";
 
 export function Search() {
   const { query, result, suggestions, isFetching, setQuery, search } =
-    useSearch({ isSuggestionEnabled: true });
+    useSearch({
+      queryIndex: "paper-eng-sem-bbq",
+      suggestIndex: "paper-def",
+      isSuggestionEnabled: true,
+    });
 
   return (
     <div className="min-h-screen">

@@ -12,6 +12,7 @@ import {
   InstitutionRankConfig,
 } from "@/server/handlers/search/rankInstitutions";
 import { compressSearchResults } from "@/server/handlers/search/compress";
+import { minMaxNorm } from "@/server/handlers/search/utils";
 
 const authorRankConfig: AuthorRankConfig = {
   top_k: 3,
@@ -31,19 +32,19 @@ export const searchRankedInstitutions = async (
   options: SearchOptions,
 ): Promise<CompressedInstitutionRankedSearchResult> => {
   const [papers, authors, institutions] = await Promise.all([
-    searchPapers(options),
-    searchAuthors(options),
-    searchInstitutions(options),
+    searchPapers(options).then(minMaxNorm),
+    searchAuthors(options).then(minMaxNorm),
+    searchInstitutions(options).then(minMaxNorm),
   ]);
   const rankedAuthors = await getRankedAuthors(
     papers,
     authors,
     authorRankConfig,
-  );
+  ).then(minMaxNorm);
   const rankedInstitutions = await getRankedInstitutions(
     rankedAuthors,
     institutions,
     institutionRankConfig,
-  );
+  ).then(minMaxNorm);
   return compressSearchResults(rankedInstitutions);
 };

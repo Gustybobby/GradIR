@@ -9,6 +9,7 @@ import { SearchOptions } from "@/server/schema/search";
 
 /**
  * ### Search institution index by query.
+ * - Multi-match search
  */
 export const searchInstitutions = async (
   options: SearchOptions,

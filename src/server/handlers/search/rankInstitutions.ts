@@ -1,7 +1,6 @@
 import {
   averageScore,
   getScoreSorted,
-  maxScore,
   sumScore,
 } from "@/server/handlers/search/utils";
 import { elastic, unwrapMGetOrThrow } from "@/server/lib/elasticsearch";
@@ -25,7 +24,7 @@ export interface InstitutionRankConfig {
 /**
  * #### Rank institutions
  * - Rank institutions by linear combination of normalized institution profile and researchers (authors) score.
- * - `inst_score` = Norm(`inst_raw_score`) + Norm(top_k_sum(`inst_aut_score`))
+ * - `inst_score` = Norm(`inst_raw_score`) + Norm(top_k_sum(`inst_aut_score`)) + Norm(avg(`inst_aut_score`))
  * - 2nd term is institution's researchers score-weighted recall.
  */
 export const getRankedInstitutions = async (
@@ -43,10 +42,6 @@ export const getRankedInstitutions = async (
     institutions.map((institution) => [institution.id, institution]),
   );
 
-  const authorScoreSum = sumScore(authors);
-  const maxAuthorScoreSum = maxScore(authors);
-  const institutionScoreSum = sumScore(institutions);
-
   return getScoreSorted(
     unionInstitutions.map((unionInstitution) => {
       const institution = institutionsRecord.get(unionInstitution.id) ?? {
@@ -61,9 +56,6 @@ export const getRankedInstitutions = async (
         config,
         institution,
         rankedAuthors,
-        institutionScoreSum,
-        authorScoreSum,
-        maxAuthorScoreSum,
       );
       return {
         ...institution,
@@ -95,19 +87,10 @@ const calculateInstitutionScore = (
   config: InstitutionRankConfig,
   institution: InstitutionWithScore,
   rankedAuthors: AuthorRankedSearchResult[],
-  institutionScoreSum: number,
-  authorScoreSum: number,
-  maxAuthorScoreSum: number,
 ) => {
-  const normRawScore = institutionScoreSum
-    ? (config.raw * institution.score) / institutionScoreSum
-    : 0;
-  const normAuthorsRecallScore = authorScoreSum
-    ? (config.recall * sumScore(rankedAuthors)) / authorScoreSum
-    : 0;
-  const normAuthorsAvgScore = maxAuthorScoreSum
-    ? (config.avg * averageScore(rankedAuthors)) / maxAuthorScoreSum
-    : 0;
+  const normRawScore = config.raw * institution.score;
+  const normAuthorsRecallScore = config.recall * sumScore(rankedAuthors);
+  const normAuthorsAvgScore = config.avg * averageScore(rankedAuthors);
   const finalScore =
     normRawScore + normAuthorsRecallScore + normAuthorsAvgScore;
   return { finalScore, normRawScore };
