@@ -24,6 +24,7 @@ interface Props {
   institution: CompressedInstitution;
   papers: CompressedInstitutionRankedSearchResult["papers"];
   isEvaluationEnabled?: boolean;
+  isDisplayScore?: boolean;
 }
 
 export function SearchResult({
@@ -31,6 +32,7 @@ export function SearchResult({
   institution,
   papers,
   isEvaluationEnabled,
+  isDisplayScore,
 }: Props) {
   const institutionPapers = React.useMemo(() => {
     const paperIdSet = new Set(
@@ -45,7 +47,9 @@ export function SearchResult({
         <div>
           <PrimaryHeading className="hover:underline underline-offset-2">
             <Link href={institution.website} target="_blank">
-              {rank}. {institution.title}
+              {rank}. {institution.title}{" "}
+              {isDisplayScore &&
+                `(${Math.round(institution.score * 100) / 100})`}
             </Link>
           </PrimaryHeading>
           <SecondaryHeading>
@@ -72,7 +76,8 @@ export function SearchResult({
               className="inline-flex hover:underline"
             >
               <UserCircle2Icon className="mr-1" />
-              {author.display_name}
+              {author.display_name}{" "}
+              {isDisplayScore && `(${Math.round(author.score * 100) / 100})`}
             </Link>
           ))}
         </div>
@@ -86,7 +91,11 @@ export function SearchResult({
         ) : null}
         <ol className="list-decimal list-inside space-y-2">
           {institutionPapers.map((paper) => (
-            <PaperListItem key={paper.id} paper={paper} />
+            <PaperListItem
+              key={paper.id}
+              paper={paper}
+              isDisplayScore={isDisplayScore}
+            />
           ))}
         </ol>
       </div>
@@ -138,12 +147,18 @@ function EvaluationSection({
   );
 }
 
-function PaperListItem({ paper }: { paper: PaperWithScore }) {
+interface PaperListItemProps {
+  paper: PaperWithScore;
+  isDisplayScore?: boolean;
+}
+
+function PaperListItem({ paper, isDisplayScore }: PaperListItemProps) {
   const abstractHighlights = paper.highlight["abstract"] ?? [];
   return (
     <li>
       <Link href={paper.doi} target="_blank" className="hover:underline">
-        {paper.title}
+        {paper.title}{" "}
+        {isDisplayScore && `(${Math.round(paper.score * 100) / 100})`}
       </Link>
       <Paragraph className="mb-1">
         {new Date(paper.published_at).toLocaleDateString()}, {paper.citations}{" "}

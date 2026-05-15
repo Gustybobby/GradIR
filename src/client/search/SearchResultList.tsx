@@ -15,6 +15,7 @@ function SearchResultListComponent({ result }: Props) {
 
   const isEvaluationEnabled =
     searchParams.get("evaluation")?.toLowerCase() === "true";
+  const isDisplayScore = searchParams.get("score")?.toLowerCase() === "true";
 
   return (
     <div className="grid grid-cols-7 mb-8">
@@ -30,6 +31,7 @@ function SearchResultListComponent({ result }: Props) {
                     institution={institution}
                     papers={result.papers}
                     isEvaluationEnabled={isEvaluationEnabled}
+                    isDisplayScore={isDisplayScore}
                   />
                 ))
               ) : (
