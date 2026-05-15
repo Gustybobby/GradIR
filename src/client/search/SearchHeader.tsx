@@ -1,7 +1,9 @@
-import { SearchInput } from "@/client/ui/SearchInput";
+import {
+  SearchInput,
+  SuggestionPopoverProps,
+  SuggestionsPopover,
+} from "@/client/ui/SearchInput";
 import { PrimaryHeading } from "@/client/ui/Typography";
-import { cn } from "@/client/ui/utils";
-import { SearchSuggestion } from "@/server/schema/search";
 import React from "react";
 
 interface Props extends SuggestionPopoverProps {
@@ -51,42 +53,5 @@ export function SearchHeader({
         )}
       </form>
     </header>
-  );
-}
-
-interface SuggestionPopoverProps {
-  query: string;
-  suggestions?: SearchSuggestion[];
-  onClickSuggestion?: (text: string) => void;
-}
-
-function SuggestionsPopover({
-  query,
-  suggestions,
-  onClickSuggestion,
-}: SuggestionPopoverProps) {
-  if (!suggestions?.length) {
-    return null;
-  }
-  return (
-    <div
-      className={cn(
-        "w-[calc(100%-16px)] bg-card absolute top-0 mt-1 translate-y-12",
-        "rounded-xl shadow-lg border border-border flex flex-col overflow-hidden",
-      )}
-    >
-      {suggestions?.map((suggestion, idx) => (
-        <button
-          key={idx}
-          className={cn(
-            "py-2 pl-10 pr-4 text-start hover:bg-card-header",
-            query === suggestion.text ? "bg-card-header" : "",
-          )}
-          onClick={() => onClickSuggestion?.(suggestion.text)}
-        >
-          {suggestion.text}
-        </button>
-      ))}
-    </div>
   );
 }

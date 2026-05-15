@@ -1,12 +1,25 @@
 "use client";
 
+import { useTypewriter } from "@/client/hooks/useTypewriter";
 import { SearchInput } from "@/client/ui/SearchInput";
 import { useRouter } from "next/navigation";
 import React from "react";
 
+const PLACEHOLDERS = [
+  "Search...",
+  "Reinforcement Learning",
+  "Quantum Computing Algorithms",
+  "Biomedical AI",
+];
+
 export function HomeSearchBox() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+  const placeholder = useTypewriter({
+    textQueue: PLACEHOLDERS,
+    charIntervalMs: 40,
+  });
 
   return (
     <form
@@ -27,6 +40,7 @@ export function HomeSearchBox() {
         id="search-query"
         name="search-query"
         isLoading={isLoading}
+        placeholder={placeholder}
       />
     </form>
   );
