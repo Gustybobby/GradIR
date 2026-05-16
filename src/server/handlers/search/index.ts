@@ -45,6 +45,7 @@ export const searchRankedInstitutions = async (
     rankedAuthors,
     institutions,
     institutionRankConfig,
+    options.query,
   ).then(normL1);
   return compressSearchResults(rankedInstitutions);
 };
