@@ -20,6 +20,10 @@ export function useSearch({
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
+  const paramsQueryIndex = searchParams.get(
+    "queryIndex",
+  ) as PaperIndexName | null;
+
   const paramsQuery = searchParams.get("query") ?? "";
   const [query, setQuery] = React.useState<string>(paramsQuery);
 
@@ -47,11 +51,14 @@ export function useSearch({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(paramsQuery);
     setIsFetching(true);
-    callSearchAPI({ paperIndex: queryIndex, query: paramsQuery })
+    callSearchAPI({
+      paperIndex: paramsQueryIndex ?? queryIndex,
+      query: paramsQuery,
+    })
       .then(setResult)
       .finally(() => setIsFetching(false));
     suggest(paramsQuery);
-  }, [queryIndex, paramsQuery, suggest]);
+  }, [queryIndex, paramsQueryIndex, paramsQuery, suggest]);
 
   React.useEffect(() => {
     if (!isSuggestionEnabled || query === paramsQuery) {

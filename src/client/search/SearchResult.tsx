@@ -143,6 +143,9 @@ function EvaluationSection({
           </Button>
         ))}
       </div>
+      <ParagraphCaption className="italic">
+        Evaluated {institution.evalCount} times
+      </ParagraphCaption>
     </div>
   );
 }

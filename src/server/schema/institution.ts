@@ -35,7 +35,7 @@ export type InstitutionUpsert = z.infer<typeof InstitutionUpsert>;
 export type InstitutionWithScore = With<Score, Institution>;
 
 export type InstitutionRankedSearchResult = With<
-  { authors: AuthorRankedSearchResult[] },
+  { authors: AuthorRankedSearchResult[]; evalCount: number },
   InstitutionWithScore
 >;
 
@@ -45,6 +45,7 @@ export type CompressedInstitution = With<
       { paper_ids: PaperWithScore["id"][] },
       Omit<AuthorRankedSearchResult, "papers">
     >[];
+    evalCount: number;
   },
   InstitutionWithScore
 >;

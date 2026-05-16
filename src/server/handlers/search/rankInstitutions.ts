@@ -36,7 +36,10 @@ export const getRankedInstitutions = async (
     ...institutions.map((institution) => institution.id),
     ...authors.map((author) => author.institution_id),
   ];
-  const unionInstitutions = await getInstitutionsByIds(institutionIds);
+  const [unionInstitutions, evalCounts] = await Promise.all([
+    getInstitutionsByIds(institutionIds),
+    getInstitutionsEvalCount(institutionIds),
+  ]);
 
   const institutionsRecord = new Map(
     institutions.map((institution) => [institution.id, institution]),
@@ -62,6 +65,7 @@ export const getRankedInstitutions = async (
         authors: rankedAuthors,
         raw_score: normRawScore,
         score: finalScore,
+        evalCount: evalCounts[institution.id] ?? 0,
       };
     }),
   );
@@ -81,6 +85,21 @@ const getInstitutionsByIds = async (ids: string[]): Promise<Institution[]> => {
       institutionDocs.docs.find((doc) => doc._id === meta.id)!,
     )._source!,
   }));
+};
+
+const getInstitutionsEvalCount = async (
+  ids: string[],
+): Promise<Record<string, number>> => {
+  if (!ids.length) {
+    return {};
+  }
+  const counts = await prisma.evaluation.groupBy({
+    by: ["institution_id"],
+    _count: { _all: true },
+  });
+  return Object.fromEntries(
+    counts.map((count) => [count.institution_id, count._count._all]),
+  );
 };
 
 const calculateInstitutionScore = (
