@@ -3,20 +3,19 @@ import { prisma } from "@/server/lib/prisma";
 import { CompressedInstitution } from "@/server/schema/institution";
 import { SearchOptions } from "@/server/schema/search";
 
-export async function evaluateSearchNDCG(searchOptions: SearchOptions) {
+export async function evaluateSearchNDCG(
+  searchOptions: SearchOptions,
+  at?: number,
+) {
   const { institutions } = await searchRankedInstitutions(searchOptions);
 
   const queryScores = await getInstitutionQueryScores(searchOptions.query);
 
-  const dcg = calculateDCG(institutions, queryScores);
-  const idcg = calculateIDCG(queryScores);
+  const dcg = calculateDCG(institutions, queryScores, at);
+  const idcg = calculateIDCG(queryScores, at);
   const ndcg = dcg / idcg;
 
-  const dcg10 = calculateDCG(institutions, queryScores, 10);
-  const idcg10 = calculateIDCG(queryScores, 10);
-  const ndcg10 = dcg10 / idcg10;
-
-  return { dcg, idcg, ndcg, dcg10, idcg10, ndcg10 };
+  return { dcg, idcg, ndcg };
 }
 
 async function getInstitutionQueryScores(

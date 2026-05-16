@@ -26,48 +26,6 @@ export const PAPER_INDEX_ENG = {
   },
 } as const satisfies IndicesCreateRequest;
 
-export const PAPER_INDEX_RES = {
-  index: "paper-res",
-  settings: {
-    analysis: {
-      filter: {
-        english_stop: {
-          type: "stop",
-          stopwords: "_english_",
-        },
-        english_possessive_stemmer: {
-          type: "stemmer",
-          language: "possessive_english",
-        },
-        english_minimal_stemmer: {
-          type: "stemmer",
-          language: "minimal_english",
-        },
-      },
-      analyzer: {
-        research_analyzer: {
-          type: "custom",
-          tokenizer: "standard",
-          filter: [
-            "english_possessive_stemmer",
-            "lowercase",
-            "english_stop",
-            "english_minimal_stemmer",
-          ],
-        },
-      },
-    },
-  },
-  mappings: {
-    properties: {
-      title: { type: "text", analyzer: "research_analyzer" },
-      abstract: { type: "text", analyzer: "research_analyzer" },
-      citations: { type: "integer" },
-      published_at: { type: "date" },
-    },
-  },
-} as const satisfies IndicesCreateRequest;
-
 export const PAPER_INDEX_ENG_SEM = {
   index: "paper-eng-sem-bbq",
   mappings: {
@@ -105,7 +63,6 @@ export const PAPER_INDEX_ENG_SEM = {
 export const PaperIndexName = z.literal([
   PAPER_INDEX_DEFAULT.index,
   PAPER_INDEX_ENG.index,
-  PAPER_INDEX_RES.index,
   PAPER_INDEX_ENG_SEM.index,
 ]);
 export type PaperIndexName = z.infer<typeof PaperIndexName>;
