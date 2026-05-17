@@ -50,7 +50,7 @@ export const suggestSearch = async (
     }))
     .filter((suggestion) => suggestion.score >= scoreThreshold)
     .sort((a, b) => -a.score + b.score)
-    .slice(0, TOP_K);
+    .slice(1, TOP_K + 1);
 };
 
 const iterateSuggestions = (

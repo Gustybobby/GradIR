@@ -5,7 +5,7 @@ import { SearchHeader } from "@/client/search/SearchHeader";
 import { SearchResultList } from "@/client/search/SearchResultList";
 
 export function Search() {
-  const { query, result, suggestions, isFetching, setQuery, search } =
+  const { query, result, suggestions, isFetching, setQuery, search, suggest } =
     useSearch({
       queryIndex: "paper-eng-sem-bbq",
       suggestIndex: "paper-def",
@@ -27,12 +27,13 @@ export function Search() {
           }
           search({ query });
         }}
-        onClickSuggestion={(text) => {
-          if (text === query) {
+        onSuggest={suggest}
+        onSelectSuggestion={(value) => {
+          if (value === query) {
             return;
           }
-          setQuery(text);
-          search({ query: text });
+          setQuery(value);
+          search({ query: value });
         }}
       />
       <SearchResultList result={isFetching ? undefined : result} />

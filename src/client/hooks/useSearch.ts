@@ -4,6 +4,7 @@ import { PaperIndexName } from "@/server/schema/indexSetting";
 import { CompressedInstitutionRankedSearchResult } from "@/server/schema/institution";
 import { SearchOptions, SearchSuggestion } from "@/server/schema/search";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 import React from "react";
 
 export interface UseSearchProps {
@@ -41,10 +42,17 @@ export function useSearch({
     [pathname, searchParams],
   );
 
+  const debouncedCallSuggestAPI = useDebouncedCallback(
+    (options) => callSuggestAPI(options).then(setSuggestions),
+    500,
+  );
+
   const suggest = React.useCallback(
     (query: string) =>
-      callSuggestAPI({ paperIndex: suggestIndex, query }).then(setSuggestions),
-    [suggestIndex],
+      isSuggestionEnabled
+        ? debouncedCallSuggestAPI({ paperIndex: suggestIndex, query })
+        : undefined,
+    [suggestIndex, isSuggestionEnabled, debouncedCallSuggestAPI],
   );
 
   React.useEffect(() => {
@@ -60,19 +68,5 @@ export function useSearch({
     suggest(paramsQuery);
   }, [queryIndex, paramsQueryIndex, paramsQuery, suggest]);
 
-  React.useEffect(() => {
-    if (!isSuggestionEnabled || query === paramsQuery) {
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSuggestions((suggestions) =>
-      suggestions
-        ? [{ text: query, score: 1 }, ...suggestions?.slice(1)]
-        : undefined,
-    );
-    const timeout = setTimeout(() => suggest(query), 500);
-    return () => clearTimeout(timeout);
-  }, [queryIndex, isSuggestionEnabled, query, paramsQuery, suggest]);
-
-  return { query, result, suggestions, isFetching, setQuery, search };
+  return { query, result, suggestions, isFetching, setQuery, search, suggest };
 }

@@ -1,16 +1,22 @@
 import {
-  SearchInput,
-  SuggestionPopoverProps,
-  SuggestionsPopover,
-} from "@/client/ui/SearchInput";
+  Combobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/client/ui/Combobox";
+import { SearchInput } from "@/client/ui/SearchInput";
 import { PrimaryHeading } from "@/client/ui/Typography";
-import React from "react";
+import { SearchSuggestion } from "@/server/schema/search";
 
-interface Props extends SuggestionPopoverProps {
+interface Props {
   query: string;
   isLoading: boolean;
+  suggestions?: SearchSuggestion[];
   onQueryChange: (value: string) => void;
   onSearch: () => void;
+  onSuggest: (value: string) => void;
+  onSelectSuggestion: (value: string) => void;
 }
 
 export function SearchHeader({
@@ -19,9 +25,9 @@ export function SearchHeader({
   isLoading,
   onQueryChange,
   onSearch,
-  onClickSuggestion,
+  onSuggest,
+  onSelectSuggestion,
 }: Props) {
-  const [focus, setFocus] = React.useState<boolean>(false);
   return (
     <header className="px-2 py-4 mb-8 bg-zinc-900 shadow-md border-b border-border grid grid-cols-7">
       <div className="hidden md:flex items-center justify-center col-span-1">
@@ -36,21 +42,40 @@ export function SearchHeader({
           onSearch();
         }}
       >
-        <SearchInput
-          name="search-query"
+        <Combobox<string>
+          items={suggestions?.map((suggestion) => suggestion.text)}
           value={query}
-          onValueChange={onQueryChange}
-          isLoading={isLoading}
-          onFocus={() => setFocus(true)}
-          onBlur={() => setTimeout(() => setFocus(false), 300)}
-        />
-        {focus && (
-          <SuggestionsPopover
-            query={query}
-            suggestions={suggestions}
-            onClickSuggestion={onClickSuggestion}
+          onInputValueChange={(value) => {
+            onQueryChange(value);
+            if (!suggestions?.some((suggestion) => suggestion.text === value)) {
+              onSuggest(value);
+            }
+          }}
+          onValueChange={(text) => text && onSelectSuggestion?.(text)}
+          onItemHighlighted={(text, e) =>
+            text && e.reason === "keyboard" && onQueryChange(text)
+          }
+          filter={null}
+        >
+          <ComboboxInput
+            name="search-query"
+            render={<SearchInput isLoading={isLoading} />}
+            onKeyDown={(e) =>
+              e.key === "Enter" && e.currentTarget.form?.requestSubmit()
+            }
           />
-        )}
+          {!!suggestions?.length && (
+            <ComboboxContent className="w-[calc(100%+10px)]" alignOffset={-40}>
+              <ComboboxList>
+                {(text: string, idx: number) => (
+                  <ComboboxItem key={idx} value={text} className="text-lg pl-9">
+                    {text}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          )}
+        </Combobox>
       </form>
     </header>
   );

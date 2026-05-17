@@ -80,50 +80,11 @@ export const AUTHOR_INDEX = {
 } as const satisfies IndicesCreateRequest;
 
 export const INSTITUTION_INDEX = {
-  index: "institution",
-  settings: {
-    analysis: {
-      filter: {
-        english_stop: {
-          type: "stop",
-          stopwords: "_english_",
-        },
-        institution_stop: {
-          type: "stop",
-          stopwords: [
-            "university",
-            "institute",
-            "college",
-            "school",
-            "faculty",
-            "technology",
-            "autonomous",
-          ],
-        },
-      },
-      analyzer: {
-        institution_analyzer: {
-          type: "custom",
-          tokenizer: "standard",
-          filter: [
-            "lowercase",
-            "asciifolding",
-            "english_stop",
-            "institution_stop",
-          ],
-        },
-        location_analyzer: {
-          type: "custom",
-          tokenizer: "standard",
-          filter: ["lowercase", "english_stop", "asciifolding"],
-        },
-      },
-    },
-  },
+  index: "institution-def",
   mappings: {
     properties: {
-      title: { type: "text", analyzer: "institution_analyzer" },
-      location: { type: "text", analyzer: "location_analyzer" },
+      title: { type: "keyword" },
+      location: { type: "keyword" },
       country: { type: "keyword" },
       website: { type: "keyword" },
       type: { type: "keyword" },
