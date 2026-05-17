@@ -5,6 +5,7 @@ import { PaperIndex } from "@/server/schema/paper";
 
 export async function setupSyncIndices(start: number): Promise<void> {
   const papers = await prisma.paper.findMany({
+    where: { created_at: { gt: new Date(2026, 4, 16) } },
     orderBy: { id: "asc" },
     take: 200,
     skip: start,

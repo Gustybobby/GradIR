@@ -3,14 +3,13 @@ import { getEmbeddings } from "@/server/lib/embedding";
 import { prisma } from "@/server/lib/prisma";
 import {
   PAPER_INDEX_DEFAULT,
+  PAPER_INDEX_ENG,
+  PAPER_INDEX_ENG_SEM,
   PaperIndexName,
 } from "@/server/schema/indexSetting";
-import { Paper, PaperUpsert, PaperIndex } from "@/server/schema/paper";
+import { Paper, PaperUpsert, PaperIndex, PaperDB } from "@/server/schema/paper";
 
-export const indexPaper = async (
-  data: PaperUpsert,
-  index: PaperIndexName,
-): Promise<Paper> => {
+export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
   const document = PaperIndex.parse(data);
   const paper = await prisma.paper.upsert({
     where: { id: data.id },
@@ -27,32 +26,18 @@ export const indexPaper = async (
       institutions: { set: data.institution_ids.map((id) => ({ id })) },
     },
   });
-  if (index === "paper-eng-sem-bbq") {
-    const [title_vector, abstract_vector] = await getEmbeddings([
-      document.title || "-",
-      document.abstract || "-",
-    ]);
-    await elastic.index({
-      index,
-      id: paper.id,
-      document: { ...document, title_vector, abstract_vector },
-    });
-  } else {
-    await elastic.index({ index, id: paper.id, document });
-  }
-  if (index !== "paper-def") {
-    await elastic.index({
-      index: PAPER_INDEX_DEFAULT.index,
-      id: paper.id,
-      document,
-    });
-  }
+
+  await Promise.all([
+    elastic.index({ index: PAPER_INDEX_DEFAULT.index, id: paper.id, document }),
+    elastic.index({ index: PAPER_INDEX_ENG.index, id: paper.id, document }),
+    indexVector(paper, document),
+  ]);
+
   return { ...paper, ...document };
 };
 
 export const indexManyPapers = async (
   data: PaperUpsert[],
-  index: PaperIndexName,
 ): Promise<Paper[]> => {
   const papers = await prisma.paper
     .createManyAndReturn({
@@ -69,6 +54,27 @@ export const indexManyPapers = async (
         ...paper,
       })),
     );
+  await Promise.all([
+    addManyToIndex("paper-def", papers),
+    addManyToIndex("paper-eng", papers),
+    addManyToIndex("paper-eng-sem-bbq", papers),
+  ]);
+  return papers;
+};
+
+const indexVector = async (paper: PaperDB, document: PaperIndex) => {
+  const [title_vector, abstract_vector] = await getEmbeddings([
+    document.title || "-",
+    document.abstract || "-",
+  ]);
+  await elastic.index({
+    index: PAPER_INDEX_ENG_SEM.index,
+    id: paper.id,
+    document: { ...document, title_vector, abstract_vector },
+  });
+};
+
+const addManyToIndex = async (index: PaperIndexName, papers: Paper[]) => {
   const isSemanticIndex = index === "paper-eng-sem-bbq";
   try {
     const titleEmbeddings = isSemanticIndex
@@ -92,15 +98,4 @@ export const indexManyPapers = async (
     });
     throw error;
   }
-  if (index !== "paper-def") {
-    const operations = papers.flatMap((paper) => {
-      const document = { ...PaperIndex.parse(paper) };
-      return [
-        { index: { _index: PAPER_INDEX_DEFAULT.index, _id: paper.id } },
-        document,
-      ];
-    });
-    await elastic.bulk({ index: PAPER_INDEX_DEFAULT.index, operations });
-  }
-  return papers;
 };
