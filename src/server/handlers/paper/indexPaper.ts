@@ -65,7 +65,7 @@ export const indexManyPapers = async (
 const indexVector = async (paper: PaperDB, document: PaperIndex) => {
   const [title_vector, abstract_vector] = await getEmbeddings([
     document.title || "-",
-    document.abstract || "-",
+    document.abstract.split(" ").slice(0, 8000).join(" ") || "-",
   ]);
   await elastic.index({
     index: PAPER_INDEX_ENG_SEM.index,
@@ -81,7 +81,12 @@ const addManyToIndex = async (index: PaperIndexName, papers: Paper[]) => {
       ? await getEmbeddings(papers.map((paper) => paper.title || "-"))
       : [];
     const abstractEmbeddings = isSemanticIndex
-      ? await getEmbeddings(papers.map((paper) => paper.abstract || "-"))
+      ? await getEmbeddings(
+          papers.map(
+            (paper) =>
+              paper.abstract.split(" ").slice(0, 3000).join(" ") || "-",
+          ),
+        )
       : [];
     const operations = papers.flatMap((paper, idx) => {
       const document = {
