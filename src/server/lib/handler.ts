@@ -12,14 +12,22 @@ export async function handle<T>(
     }
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        return NextResponse.json("unique constraint violation", {
-          status: 409,
-        });
+        return NextResponse.json(
+          {
+            message: "unique constraint violation",
+            issue: error.meta?.["issue"],
+          },
+          { status: 409 },
+        );
       }
       if (error.code === "P2003") {
-        return NextResponse.json("foreign key constraint violation", {
-          status: 409,
-        });
+        return NextResponse.json(
+          {
+            message: "foreign key constraint violation",
+            issue: error.meta?.["issue"],
+          },
+          { status: 409 },
+        );
       }
     }
     if (error instanceof Error) {
