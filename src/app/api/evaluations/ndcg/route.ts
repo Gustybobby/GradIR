@@ -2,9 +2,10 @@ import { evaluateSearchNDCG } from "@/server/handlers/evaluation/evaluateSearchN
 import { decodeSearchParamsToSearchOptions } from "@/server/handlers/search/utils";
 import { authorizeAPIKey } from "@/server/lib/auth";
 import { handle } from "@/server/lib/handler";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
+  await connection();
   return handle(async () => {
     await authorizeAPIKey();
     const searchParams = req.nextUrl.searchParams;

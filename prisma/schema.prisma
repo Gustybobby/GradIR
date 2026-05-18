@@ -49,7 +49,7 @@ model Paper {
   // title       String
   // abstract     String
   // published_at DateTime
-  // citations    Int
+  citations  Int
   updated_at DateTime @updatedAt
   created_at DateTime @default(now())
 

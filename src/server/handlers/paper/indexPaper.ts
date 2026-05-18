@@ -53,12 +53,14 @@ const upsertPaper = async (data: PaperUpsert) =>
       create: {
         id: data.id,
         doi: data.doi,
+        citations: data.citations,
         authors: { connect: data.author_ids.map((id) => ({ id })) },
         institutions: { connect: data.institution_ids.map((id) => ({ id })) },
       },
       update: {
         id: data.id,
         doi: data.doi,
+        citations: data.citations,
         authors: { set: data.author_ids.map((id) => ({ id })) },
         institutions: { set: data.institution_ids.map((id) => ({ id })) },
       },

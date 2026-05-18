@@ -4,6 +4,7 @@ import z from "zod";
 export const PaperDB = z.object({
   id: z.string(),
   doi: z.string(),
+  citations: z.number().int(),
   updated_at: z.date(),
   created_at: z.date(),
 });
