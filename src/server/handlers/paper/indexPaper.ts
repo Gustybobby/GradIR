@@ -1,3 +1,4 @@
+import { chunk } from "@/server/lib/chunk";
 import { elastic } from "@/server/lib/elasticsearch";
 import { getEmbeddings } from "@/server/lib/embedding";
 import { prisma } from "@/server/lib/prisma";
@@ -11,7 +12,42 @@ import { Paper, PaperUpsert, PaperIndex, PaperDB } from "@/server/schema/paper";
 
 export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
   const document = PaperIndex.parse(data);
-  const paper = await prisma.paper.upsert({
+  const paper = await upsertPaper(data);
+
+  await Promise.all([
+    elastic.index({ index: PAPER_INDEX_DEFAULT.index, id: paper.id, document }),
+    elastic.index({ index: PAPER_INDEX_ENG.index, id: paper.id, document }),
+    indexVector(paper, document),
+  ]);
+
+  return { ...paper, ...document };
+};
+
+export const indexManyPapers = async (
+  data: PaperUpsert[],
+): Promise<Paper[]> => {
+  const papers: Paper[] = [];
+  for (const segments of chunk(data, 20)) {
+    const upsertedSegments = await Promise.all(segments.map(upsertPaper)).then(
+      (papers) =>
+        papers.map((paper) => ({
+          ...PaperIndex.parse(data.find((d) => d.id === paper.id)),
+          ...paper,
+        })),
+    );
+    papers.push(...upsertedSegments);
+  }
+
+  await Promise.all([
+    addManyToIndex("paper-def", papers),
+    addManyToIndex("paper-eng", papers),
+    addManyToIndex("paper-eng-sem-bbq", papers),
+  ]);
+  return papers;
+};
+
+const upsertPaper = async (data: PaperUpsert) =>
+  prisma.paper.upsert({
     where: { id: data.id },
     create: {
       id: data.id,
@@ -26,41 +62,6 @@ export const indexPaper = async (data: PaperUpsert): Promise<Paper> => {
       institutions: { set: data.institution_ids.map((id) => ({ id })) },
     },
   });
-
-  await Promise.all([
-    elastic.index({ index: PAPER_INDEX_DEFAULT.index, id: paper.id, document }),
-    elastic.index({ index: PAPER_INDEX_ENG.index, id: paper.id, document }),
-    indexVector(paper, document),
-  ]);
-
-  return { ...paper, ...document };
-};
-
-export const indexManyPapers = async (
-  data: PaperUpsert[],
-): Promise<Paper[]> => {
-  const papers = await prisma.paper
-    .createManyAndReturn({
-      data: data.map((paper) => ({
-        id: paper.id,
-        doi: paper.doi,
-        authors: { connect: paper.author_ids.map((id) => ({ id })) },
-        institutions: { connect: paper.institution_ids.map((id) => ({ id })) },
-      })),
-    })
-    .then((papers) =>
-      papers.map((paper) => ({
-        ...PaperIndex.parse(data.find((d) => d.id === paper.id)),
-        ...paper,
-      })),
-    );
-  await Promise.all([
-    addManyToIndex("paper-def", papers),
-    addManyToIndex("paper-eng", papers),
-    addManyToIndex("paper-eng-sem-bbq", papers),
-  ]);
-  return papers;
-};
 
 const indexVector = async (paper: PaperDB, document: PaperIndex) => {
   const [title_vector, abstract_vector] = await getEmbeddings([
