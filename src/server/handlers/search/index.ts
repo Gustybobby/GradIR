@@ -8,6 +8,7 @@ import {
   getRankedAuthors,
 } from "@/server/handlers/search/rankAuthors";
 import {
+  filterInstitutionsByCountries,
   getRankedInstitutions,
   InstitutionRankConfig,
 } from "@/server/handlers/search/rankInstitutions";
@@ -46,6 +47,8 @@ export const searchRankedInstitutions = async (
     institutions,
     institutionRankConfig,
     options.query,
-  ).then(normL1);
+  )
+    .then((results) => filterInstitutionsByCountries(results, options))
+    .then(normL1);
   return compressSearchResults(rankedInstitutions);
 };

@@ -4,6 +4,7 @@ import z from "zod";
 export const SearchOptions = z.object({
   paperIndex: PaperIndexName,
   query: z.string(),
+  countries: z.string().optional(),
   paperRetrieverWeights: z
     .object({
       match: z.number(),

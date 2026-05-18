@@ -33,13 +33,23 @@ export function useSearch({
   const [suggestions, setSuggestions] = React.useState<SearchSuggestion[]>();
   const [isFetching, setIsFetching] = React.useState<boolean>(true);
 
+  const paramsCountries = searchParams.get("countries");
+  const [selectedCountries, setSelectedCountries] = React.useState<string[]>(
+    paramsCountries?.split(",") ?? [],
+  );
+
   const search = React.useCallback(
     async (options: Pick<SearchOptions, "query">) => {
       const params = new URLSearchParams(searchParams);
       params.set("query", options.query);
+      if (selectedCountries.length) {
+        params.set("countries", selectedCountries.toString());
+      } else {
+        params.delete("countries");
+      }
       window.history.pushState({}, "", `${pathname}?${params.toString()}`);
     },
-    [pathname, searchParams],
+    [pathname, searchParams, selectedCountries],
   );
 
   const debouncedCallSuggestAPI = useDebouncedCallback(
@@ -62,11 +72,22 @@ export function useSearch({
     callSearchAPI({
       paperIndex: paramsQueryIndex ?? queryIndex,
       query: paramsQuery,
+      countries: paramsCountries ?? undefined,
     })
       .then(setResult)
       .finally(() => setIsFetching(false));
     suggest(paramsQuery);
-  }, [queryIndex, paramsQueryIndex, paramsQuery, suggest]);
+  }, [queryIndex, paramsQueryIndex, paramsQuery, paramsCountries, suggest]);
 
-  return { query, result, suggestions, isFetching, setQuery, search, suggest };
+  return {
+    query,
+    result,
+    suggestions,
+    isFetching,
+    selectedCountries,
+    setQuery,
+    search,
+    suggest,
+    setSelectedCountries,
+  };
 }

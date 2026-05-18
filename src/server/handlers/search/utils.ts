@@ -27,6 +27,7 @@ export const decodeSearchParamsToSearchOptions = (
   return SearchOptions.parse({
     paperIndex: searchParams.get("paperIndex"),
     query: searchParams.get("query"),
+    countries: searchParams.get("countries") ?? undefined,
     paperRetrieverWeights: weights
       ? { match: weights[0], title: weights[1], abstract: weights[2] }
       : undefined,

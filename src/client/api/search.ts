@@ -6,7 +6,9 @@ export const search = async (
 ): Promise<CompressedInstitutionRankedSearchResult> => {
   const response = await fetch(
     `/api/search?${new URLSearchParams(
-      Object.entries(options).map(([key, value]) => [key, value.toString()]),
+      Object.entries(options)
+        .filter(([, value]) => value)
+        .map(([key, value]) => [key, value.toString()]),
     ).toString()}`,
   );
   return response.json();

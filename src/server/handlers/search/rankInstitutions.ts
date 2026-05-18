@@ -13,6 +13,7 @@ import {
   InstitutionRankedSearchResult,
   InstitutionWithScore,
 } from "@/server/schema/institution";
+import { SearchOptions } from "@/server/schema/search";
 
 export interface InstitutionRankConfig {
   top_k: number;
@@ -71,6 +72,16 @@ export const getRankedInstitutions = async (
     }),
   );
 };
+
+export const filterInstitutionsByCountries = (
+  institutions: InstitutionRankedSearchResult[],
+  options: Pick<SearchOptions, "countries">,
+) =>
+  options.countries
+    ? institutions.filter((institution) =>
+        options.countries?.split(",").includes(institution.country),
+      )
+    : institutions;
 
 const getInstitutionsByIds = async (ids: string[]): Promise<Institution[]> => {
   if (!ids.length) {
