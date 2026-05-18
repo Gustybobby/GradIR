@@ -27,7 +27,10 @@ export const AuthorUpsert = Author.omit({
 });
 export type AuthorUpsert = z.infer<typeof AuthorUpsert>;
 
-export type AuthorWithScore = With<Score & Highlight, Author>;
+export type AuthorWithScore = With<
+  Score & Highlight & { filled?: boolean },
+  Author
+>;
 
 export type AuthorRankedSearchResult = With<
   { papers: PaperWithScore[] },

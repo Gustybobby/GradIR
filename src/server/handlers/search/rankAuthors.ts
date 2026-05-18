@@ -91,11 +91,13 @@ const getAuthorsByIds = async (
     index: AUTHOR_INDEX.index,
     ids: authorMetas.map((meta) => meta.id),
   });
-  return authorMetas.map((meta) => ({
-    ...meta,
-    ...unwrapMGetOrThrow(authorDocs.docs.find((doc) => doc._id === meta.id)!)
-      ._source!,
-  }));
+  return dedupeAuthors(
+    authorMetas.map((meta) => ({
+      ...meta,
+      ...unwrapMGetOrThrow(authorDocs.docs.find((doc) => doc._id === meta.id)!)
+        ._source!,
+    })),
+  );
 };
 
 const calculateAuthorScore = (
@@ -108,4 +110,29 @@ const calculateAuthorScore = (
   const normPapersAvgScore = config.avg * averageScore(rankedPapers);
   const finalScore = normRawScore + normPapersRecallScore + normPapersAvgScore;
   return { finalScore, normRawScore };
+};
+
+const dedupeAuthors = <T extends Pick<Author, "orcid" | "full_name">>(
+  authors: T[],
+): T[] => {
+  const dedupedAuthors: T[] = [];
+  const orcIdSet = new Set<string>();
+  const fullNameSet = new Set<string>();
+  for (const author of authors) {
+    if (!author.orcid) {
+      if (fullNameSet.has(author.full_name)) {
+        continue;
+      }
+      fullNameSet.add(author.full_name);
+      dedupedAuthors.push(author);
+      continue;
+    }
+    if (orcIdSet.has(author.orcid)) {
+      continue;
+    }
+    orcIdSet.add(author.orcid);
+    fullNameSet.add(author.full_name);
+    dedupedAuthors.push(author);
+  }
+  return dedupedAuthors;
 };

@@ -14,6 +14,7 @@ import {
 } from "@/server/handlers/search/rankInstitutions";
 import { compressSearchResults } from "@/server/handlers/search/compress";
 import { normL1 } from "@/server/handlers/search/utils";
+import { fillEmpty } from "@/server/handlers/search/fillEmpty";
 
 const authorRankConfig: AuthorRankConfig = {
   top_k: 3,
@@ -49,6 +50,7 @@ export const searchRankedInstitutions = async (
     options.query,
   )
     .then((results) => filterInstitutionsByCountries(results, options))
+    .then(fillEmpty)
     .then(normL1);
   return compressSearchResults(rankedInstitutions);
 };

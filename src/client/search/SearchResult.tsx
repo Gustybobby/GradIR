@@ -41,6 +41,8 @@ export function SearchResult({
     return papers.filter((paper) => paperIdSet.has(paper.id));
   }, [institution, papers]);
 
+  const isPaperAuthorFilled = institutionPapers.some((paper) => paper.filled);
+
   return (
     <article className="bg-card rounded-lg shadow-md">
       <header className="p-4 bg-card-header rounded-t-lg flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
@@ -64,7 +66,9 @@ export function SearchResult({
       <div className="grid gap-1 p-4">
         {institution.authors.length ? (
           <TertiaryHeading>
-            {`Top ${institution.authors.length}`} Matched Researchers
+            {isPaperAuthorFilled
+              ? "Popular Researchers"
+              : `Top ${institution.authors.length} Matched Researchers`}
           </TertiaryHeading>
         ) : null}
         <div className="flex flex-wrap space-x-2 space-y-1">
@@ -86,7 +90,9 @@ export function SearchResult({
       <div className="grid gap-1 p-4">
         {institutionPapers.length ? (
           <TertiaryHeading>
-            {`Top ${institutionPapers.length}`} Matched Publications
+            {isPaperAuthorFilled
+              ? "Top Cited Publications"
+              : `Top ${institutionPapers.length} Matched Publications`}
           </TertiaryHeading>
         ) : null}
         <ol className="list-decimal list-inside space-y-2">

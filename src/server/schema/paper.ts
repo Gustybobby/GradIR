@@ -30,4 +30,7 @@ export const PaperUpsert = Paper.omit({
 });
 export type PaperUpsert = z.infer<typeof PaperUpsert>;
 
-export type PaperWithScore = With<Score & Highlight, Paper>;
+export type PaperWithScore = With<
+  Score & Highlight & { filled?: boolean },
+  Paper
+>;

@@ -56,7 +56,7 @@ export const getRankedInstitutions = async (
       };
       const rankedAuthors = getScoreSorted(
         authors.filter((author) => author.institution_id === institution.id),
-      ).slice(0, config.top_k);
+      );
       const { finalScore, normRawScore } = calculateInstitutionScore(
         config,
         institution,
@@ -121,9 +121,10 @@ const calculateInstitutionScore = (
   institution: InstitutionWithScore,
   rankedAuthors: AuthorRankedSearchResult[],
 ) => {
+  const topKAuthors = rankedAuthors.slice(0, config.top_k);
   const normRawScore = config.raw * institution.score;
-  const normAuthorsRecallScore = config.recall * sumScore(rankedAuthors);
-  const normAuthorsAvgScore = config.avg * averageScore(rankedAuthors);
+  const normAuthorsRecallScore = config.recall * sumScore(topKAuthors);
+  const normAuthorsAvgScore = config.avg * averageScore(topKAuthors);
   const finalScore =
     normRawScore + normAuthorsRecallScore + normAuthorsAvgScore;
   return { finalScore, normRawScore };
