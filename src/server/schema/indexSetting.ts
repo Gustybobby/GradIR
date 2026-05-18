@@ -68,13 +68,13 @@ export const PaperIndexName = z.literal([
 export type PaperIndexName = z.infer<typeof PaperIndexName>;
 
 export const AUTHOR_INDEX = {
-  index: "author",
+  index: "author-def",
   mappings: {
     properties: {
       full_name: { type: "keyword" },
       display_name: { type: "keyword" },
       h_index: { type: "integer" },
-      orc_id: { type: "keyword" },
+      orcid: { type: "keyword" },
     },
   },
 } as const satisfies IndicesCreateRequest;
