@@ -49,6 +49,104 @@ This project requires **PostgreSQL**, **Elastic Cloud**, and **OpenAI**.
    npm run start
    ```
 
+# Search Architecture
+
+The search system is built around three core entities:
+
+* **Institution**
+* **Author**
+* **Publication**
+
+## Entity Relationships
+
+* A publication can be written by multiple authors.
+* An author can contribute to multiple publications.
+* Each author belongs to a single institution.
+
+```text
+Institution (1) ────< Author (M) >────< Publication (M)
+```
+
+## Search Pipeline
+
+A query is executed across all three indices:
+
+* `institution-*`
+* `author-*`
+* `paper-*`
+
+### 1. Exact Match Retrieval
+
+For institution and author indices, standard lexical retrieval is used to search for exact or near-exact matches.
+
+### 2. Publication Ranking
+
+For publication indices, retrieved documents are re-ranked using a custom scoring function:
+
+```math
+score_{paper} =
+gauss\_decay_{publication\_date}
+\left(
+\ln(e + citations) \times raw\_score
+\right)
+```
+
+### Publication Ranking Strategy
+
+The scoring function is designed to prioritize:
+
+* **Highly cited papers**: research impact
+* **Recently published papers**: research relevance and recency
+* **Strong textual relevance**: query-document matching quality
+
+## Author Ranking
+
+After retrieving publications, related authors are aggregated and ranked using the following scoring formula:
+
+```math
+score_{author} =
+w_{raw}L1(score_{raw})
++
+w_{sum}L1\left(
+Sum_{topk}(score_{paper})
+\right)
++
+w_{avg}L1\left(
+Avg_{topk}(score_{paper})
+\right)
+```
+
+### Author Ranking Components
+
+| Component               | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `score_raw`             | Direct relevance score from author index retrieval |
+| `Sum_topk(score_paper)` | Total impact of the author's top publications      |
+| `Avg_topk(score_paper)` | Average quality of the author's top publications   |
+| `L1()`                  | Normalization function                             |
+| `w_*`                   | Tunable weighting parameters                       |
+
+## Institution Ranking
+
+Institutions are ranked using aggregated author scores:
+
+```math
+score_{institution} =
+w_{raw}L1(score_{raw})
++
+w_{sum}L1\left(
+Sum_{topk}(score_{author})
+\right)
++
+w_{avg}L1\left(
+Avg_{topk}(score_{author})
+\right)
+```
+
+## Parameter Tuning
+
+> All weights and ranking parameters are empirically tuned using benchmark test queries and evaluation corpora to optimize retrieval quality and ranking performance.
+
 # Document Indices
 
 We provide multiple publication document indices with different analyzer and retrieval configurations for testing and comparison purposes.
