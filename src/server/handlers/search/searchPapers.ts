@@ -29,10 +29,10 @@ export const searchPapers = async (
       },
       functions: [
         {
-          field_value_factor: {
-            field: "citations",
-            modifier: "ln2p",
-            missing: 0,
+          script_score: {
+            script: {
+              source: "Math.log(Math.min(doc['citations'].value, 500)+2)",
+            },
           },
         },
         {
