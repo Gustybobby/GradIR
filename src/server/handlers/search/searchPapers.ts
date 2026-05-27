@@ -31,7 +31,7 @@ export const searchPapers = async (
         {
           field_value_factor: {
             field: "citations",
-            modifier: "ln1p",
+            modifier: "ln2p",
             missing: 0,
           },
         },

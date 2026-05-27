@@ -53,15 +53,15 @@ This project requires **PostgreSQL**, **Elastic Cloud**, and **OpenAI**.
 
 The search system is built around three core entities:
 
-* **Institution**
-* **Author**
-* **Publication**
+- **Institution**
+- **Author**
+- **Publication**
 
 ## Entity Relationships
 
-* A publication can be written by multiple authors.
-* An author can contribute to multiple publications.
-* Each author belongs to a single institution.
+- A publication can be written by multiple authors.
+- An author can contribute to multiple publications.
+- Each author belongs to a single institution.
 
 ```text
 Institution (1) ────< Author (M) >────< Publication (M)
@@ -71,9 +71,9 @@ Institution (1) ────< Author (M) >────< Publication (M)
 
 A query is executed across all three indices:
 
-* `institution-*`
-* `author-*`
-* `paper-*`
+- `institution-*`
+- `author-*`
+- `paper-*`
 
 ### 1. Exact Match Retrieval
 
@@ -87,7 +87,7 @@ For publication indices, retrieved documents are re-ranked using a custom scorin
 score_{paper} =
 gauss\_decay_{publication\_date}
 \left(
-\ln(e + citations) \times raw\_score
+\ln(2 + citations) \times raw\_score
 \right)
 ```
 
@@ -95,9 +95,9 @@ gauss\_decay_{publication\_date}
 
 The scoring function is designed to prioritize:
 
-* **Highly cited papers**: research impact
-* **Recently published papers**: research relevance and recency
-* **Strong textual relevance**: query-document matching quality
+- **Highly cited papers**: research impact
+- **Recently published papers**: research relevance and recency
+- **Strong textual relevance**: query-document matching quality
 
 ## Author Ranking
 
