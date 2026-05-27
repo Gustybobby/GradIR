@@ -4,9 +4,11 @@
 
 ## Installation
 
-This project requires **PostgreSQL** and **Elastic Cloud**.
+This project requires **PostgreSQL**, **Elastic Cloud**, and **OpenAI**.
 
 > ⚠️ If you plan to self-host Elasticsearch instead of using Elastic Cloud, you will need to manually modify the Elasticsearch client initialization in the codebase.
+
+> ⚠️ OpenAI is strictly used for text embeddings, if you wish to use a different provider or model, you will need to modify the source code.
 
 ### Steps
 
@@ -47,6 +49,25 @@ This project requires **PostgreSQL** and **Elastic Cloud**.
    npm run start
    ```
 
+# Document Indices
+
+We provide multiple publication document indices with different analyzer and retrieval configurations for testing and comparison purposes.
+
+## Publication Indices
+
+| Index Name      | Configuration                                                                                                                                                                                                                      | Example Tokenization                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `paper-def`     | BM25 regular text matching with lowercase normalization, no stop word pruning, and no stemming.                                                                                                                                    | `"Quantum Computer"` → `["quantum", "computer"]` |
+| `paper-eng`     | BM25 regular text matching with lowercase normalization, English stop word pruning, and English corpus stemming.                                                                                                                   | `"Quantum Computer"` → `["quant", "comput"]`     |
+| `paper-eng-sem` | English analyzer with semantic retrieval using OpenAI `text-embedding-3-small` embeddings. Uses BBQ HNSW quantization with cosine similarity for approximate KNN search. Supports hybrid retrieval combining KNN and BM25 scoring. | Hybrid Search → `KNN + BM25`                     |
+
+## Author & Institution Indices
+
+For author and institution documents, we currently provide a single default index configuration:
+
+- `author-def`
+- `institution-def`
+
 # API Documentation
 
 ## Overview
@@ -58,6 +79,10 @@ This API provides endpoints to manage **authors**, **institutions**, and **paper
 Includes `x-api-key` header for authorization.
 
 ---
+
+## `/api/indices` — POST
+
+Initialize the indices required for the project to run.
 
 ## `/api/institutions` — PUT
 
